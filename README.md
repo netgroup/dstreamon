@@ -34,7 +34,7 @@ StreaMON should compile well in all major new distributions, however was tested 
 HOW TO COMPILE
 --------------
 
-1) Enter in $STREAMON_ROOT folder and type the following command:
+1) Enter in 'd-streamon' folder and type the following command:
         $ cmake .
        
         (yes, with the dot, not a mistake)
