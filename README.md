@@ -1,4 +1,4 @@
-STREAMON PROTOTYPE COMPILE GUIDE
+D-STREAMON PROTOTYPE COMPILE GUIDE
 ================================
 
 StreaMON Prototype is actually based on Blockmon (see blockmon.README for more info)
