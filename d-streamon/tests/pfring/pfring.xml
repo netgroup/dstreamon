@@ -1,0 +1,18 @@
+<composition id="arch_input" app_id="boh">
+	<install>
+		<threadpool id="sniffer_thread" num_threads="2" >
+			<core number="0"/>
+		</threadpool>
+
+		<block id="sniffer" type="MQPfring" sched_type="active" threadpool="sniffer_thread"> 
+			<params>
+				<queues device="eth3"/>
+			</params>
+		</block>
+
+	</install>
+
+</composition>
+
+
+				

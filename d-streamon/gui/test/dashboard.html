@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Demons - Dashboard</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		<link rel="stylesheet" type="text/css" href="css/demons/jquery-ui-1.8.16.custom.css" />	
+		<link rel="stylesheet" type="text/css" href="css/demons.css" />	
+		
+		<script language="javascript" type="text/javascript" src="js/jquery-1.6.2.js"></script>
+		<script language="javascript" type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+		<script language="javascript" type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+		<script language="javascript" type="text/javascript" src="js/demons.dashboard.js"></script>
+
+		<style>
+			#gallery { float: left; width: 85%; min-height: 12em; } * html #gallery { height: 12em; } /* IE6 */
+			.gallery.custom-state-active { background: #eee; }
+			.gallery li { float: left; width: 48%; height: 296px; padding: 0.4em; margin: 0 0.4em 0.4em 0; text-align: center; cursor: move; }
+			.gallery li h5 { margin: 0 0 0.4em; font-size: 14px; }
+			.gallery li a { float: right; }
+			.gallery li a.ui-icon-zoomin { float: left; }
+			.gallery li img { width: 100%; height: 85%; }
+			.gallery li div { width: 100%; height: 85%; }
+		
+			#trash { float: right; width: 12%; min-height: 18em; padding: 1%;} * html #trash { height: 18em; } /* IE6 */
+			#trash h4 { line-height: 16px; font-size: 14px; margin: 0 0 0.4em; }
+			#trash h4 .ui-icon { float: left; }
+			#trash .gallery h5 { display: none; }
+		</style>
+	</head>
+	<body>
+		<div class="dashboard">
+		    <div id="dialog-config">
+		    	<table class="table-invisible">
+		    		<tr>
+		    			<td>
+							<label for="dialog-new-composition-id">Configuration value: </label>
+						</td>
+						<td>
+							<input type="text" name="dialog-new-composition-id" id="dialog-new-composition-id" value="Today" class="ui-widget-content ui-corner-all" />
+						</td>
+		    		</tr>
+		    		<tr>
+						<td>
+							<label for="dialog-new-composition-name">Refresh time (s): </label>
+						</td>
+						<td>
+							<input type="text" name="dialog-new-composition-name" id="dialog-new-composition-name" value="60" class="ui-widget-content ui-corner-all" />
+						</td>
+					</tr>
+				</table>
+            </div>
+		
+			<ul id="gallery" class="gallery ui-helper-reset ui-helper-clearfix">
+				<li class="ui-widget-content ui-corner-tr">
+					<h5 class="ui-widget-header">Number of malicious domains found</h5>
+					<div id="chart_1"></div>
+					<a href="#" title="View larger image" class="ui-icon ui-icon-zoomin">View larger</a>
+					<a href="#" title="Configuration" class="ui-icon ui-icon-wrench">Configuration</a>
+				</li>
+				<li class="ui-widget-content ui-corner-tr">
+					<h5 class="ui-widget-header">Popularity</h5>
+					<div id="chart_2"></div>
+<!--			    	<table>-->
+<!--			    		<tr>-->
+<!--			    			<td width="20" height="20" style="background-color: red;"></td>-->
+<!--		    				<td>P: Popularity</td>-->
+<!--		    			</tr>-->
+<!--		    		</table>-->
+					<a href="#" title="View larger image" class="ui-icon ui-icon-zoomin">View larger</a>
+					<a href="#" title="Configuration" class="ui-icon ui-icon-wrench">Configuration</a>
+				</li>
+				<li class="ui-widget-content ui-corner-tr">
+					<h5 class="ui-widget-header">Percentage of attacks</h5>
+					<div id="chart_3" align="center"></div>
+					<a href="#" title="View larger image" class="ui-icon ui-icon-zoomin">View larger</a>
+					<a href="#" title="Configuration" class="ui-icon ui-icon-wrench">Configuration</a>
+				</li>
+				<li class="ui-widget-content ui-corner-tr">
+					<h5 class="ui-widget-header">Robots activity</h5>
+					<div id="chart_4"></div>
+					<a href="#" title="View larger image" class="ui-icon ui-icon-zoomin">View larger</a>
+					<a href="#" title="Configuration" class="ui-icon ui-icon-wrench">Configuration</a>
+				</li>
+			</ul>
+			
+			<div id="trash" class="ui-widget-content ui-state-default">
+				<h4 class="ui-widget-header"><span class="ui-icon ui-icon-trash">Available</span> Available</h4>
+			</div>
+		</div>
+	</body>
+</html>

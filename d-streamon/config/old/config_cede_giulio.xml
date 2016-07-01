@@ -1,0 +1,138 @@
+<streamon>
+    <!-- <source type="trace" name="/home/demons/Demons/streamon-demo-barcellona/50hosts_30srv_60req.pcap"/> -->
+    <source type="live" name="eth1" />
+
+    <statedef id="normal" />
+    <statedef id="learning" />
+    <statedef id="control" />
+    <statedef id="alert" />
+    <statedef id="classified" />
+    <!-- <statedef id="suspicious" /> -->
+
+    <additional_block name="Forwarder">
+	 <socket path="/home/demons/Demons/cede-alberto/newcede/Rewrite-Cede/Debug/fromStreamon1"/>
+
+        <feed atype="ddos" name="ip_dst" content="ip_src" export="always" />
+    </additional_block>   
+
+    <metrics>
+        <!--
+        <metric name="new_server" config="">
+            <variation_detector status="on" />
+            <variation_monitor status="off" />
+        </metric>
+        -->
+
+        <metric name="total_server_fanin" config="" >
+            <variation_detector status="off" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="tewma" window="0.5" life="0.033" />
+        </metric>
+        
+
+        <metric name="good_guys" config="">
+            <variation_detector status="on" />
+            <variation_monitor status="off" type="dleft" />
+        </metric>        
+
+        <!--
+        <metric name="server_fanin_per_host" config="" >
+            <variation_detector status="off" />
+            <variation_monitor status="on" type="dleft" window="60"/>
+        </metric>
+
+        <metric name="server_fanin_unique" config="">
+            <variation_detector status="on" />
+            <variation_monitor status="on" type="dleft" window="60"/>
+        </metric>
+
+        -->
+
+        <table name="average_server_requests" type="DLeft" key_type="" value_type="double" nhash="8" shash="20">
+        </table>
+
+    </metrics>
+
+
+    <features>
+        <feature name="new_host_f" body="good_guys" />
+        <feature name="total_server_requests" body="total_server_fanin" />
+    </features>
+
+    <event type="timeout" class="learn">
+        <state id="learning">
+            <use-metric id="total_server_fanin" vm_get="ip_dst" />
+
+            <condition expression="true" action="average_server_requests(ip_dst)=total_server_requests" next_state="control">
+                <timeout_set class="learn" key="ip_dst" value="0" />
+            </condition>
+
+            <post-condition-action do="print(%ip_dst in control - average: %total_server_requests)" />
+        </state>
+    </event>
+
+    <event type="timeout" class="printer">
+	<state id="classified">
+            <use-metric id="total_server_fanin" vm_get="ip_dst" />
+
+            <condition expression="false" action="" next_state="" />
+
+            <post-condition-action do="print(%ip_dst classified average: %total_server_requests)" />
+	</state>
+    </event>
+
+    <event type="packet" selector="proto tcp and dst_port 80 and flags tcp-syn" primary-key="ip_dst" attack_type="ddos">
+        <state id="normal">
+
+            <use-metric id="total_server_fanin" vm_update="ip_dst" />
+            <use-metric id="good_guys" vd_update="ip_src-ip_dst" />
+
+            <condition expression="total_server_requests > 0" action="Export" next_state = "learning">
+                <timeout_set class="learn" key="ip_dst" value="30" />
+            </condition>
+
+            <post-condition-action do="print(%ip_dst go in learning...)" />
+        </state>
+
+        <state id="learning">
+            <use-metric id="total_server_fanin" vm_update="ip_dst" />
+            <use-metric id="good_guys" vd_update="ip_src-ip_dst" />
+
+            <condition expression="new_host_f == 0" action="Export" next_state = "">
+            </condition>
+
+            <post-condition-action do="" />
+
+        </state>
+
+        <state id="control">
+            <use-metric id="total_server_fanin" vm_update="ip_dst" />
+            <use-metric id="good_guys" vd_update="ip_src-ip_dst" />
+
+            <condition expression="total_server_requests > 8*average_server_requests(ip_dst)" action="print(%ip_dst under attack => %total_server_requests requests/min),print_tab" next_state = "alert">
+            </condition>
+
+            <condition expression="new_host_f == 0" action="Export" next_state = "" />
+
+            <post-condition-action do="" />
+        </state>
+
+        <state id="alert">
+            <use-metric id="total_server_fanin" vm_update="ip_dst" />
+
+            <condition expression="true" action="Suspect" next_state = "classified">
+		<!-- <timeout_set class="printer" key="ip_dst" value="3" /> -->
+            </condition>
+
+            <post-condition-action do="print(%ip_dst classified.)" />
+        </state>
+
+	<state id="classified">
+            <use-metric id="total_server_fanin" vm_update="ip_dst" />
+
+            <condition expression="false" action="" next_state = "" />
+
+            <post-condition-action do="" />
+	</state>
+    </event>
+
+</streamon>

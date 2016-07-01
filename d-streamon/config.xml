@@ -1,0 +1,170 @@
+<botstream>
+    <!-- source type="trace" name="/mnt/old/demons/trace/1.pcap" /-->
+
+    <source type="live" name="lo" />
+
+    <statedef id="normal" />
+    <!-- statedef id="alert" /-->
+    <!-- <statedef id="suspect" /> -->
+
+    <!-- <statedef id="checked" /> -->
+
+    <!--    
+    <additional_block name="Forwarder">
+        <socket path="/home/giulio/test/socket_echo" />
+
+        <feed atype="DNSR" name="domain_addr" content="ip_dst" export="always" />
+        <feed atype="DNSQ" name="domain_addr" content="ip_src" export="on_suspect" />
+    </additional_block>   
+    -->
+    
+    <metrics>
+        <metric name="dnsq" config="" >
+            <variation_detector status="off" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="dleft" window="60"/>
+        </metric>
+
+        <metric name="dnsnx" config="" >
+            <variation_detector status="off" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="dleft" window="60"/>
+        </metric>
+
+<!--        
+        <metric name="tcps" config="" >
+            <variation_detector status="off" />
+            <variation_monitor status="on" type="tewma" window="60"/>
+        </metric>
+-->
+
+<!--
+        <table name="tabz" type="DLeft" key_type="" value_type="uint32_t" nhash="8" shash="20">
+        </table>
+
+        <table name="tabx" type="DLeft" key_type="" value_type="uint32_t" nhash="8" shash="20">
+        </table>
+-->
+
+    </metrics>
+
+
+    <features>
+      <feature name="DnsQuery" body="dnsq"/>
+      <feature name="DnsNX" body="dnsnx"/>
+      <feature name="DnsRatio" body="dnsnx/dnsq"/>
+      <!-- <feature name="SynRate" body="tcps" /> -->
+    </features>
+
+	<!--
+    <event type="timeout" class="mine">
+        <state id="normal">
+            <use-metric id="dnsq" vd_get="domain_name" />
+
+            <condition expression="true" action="dnsq.reset()" next_state = "checked">
+            </condition>
+
+            <post-condition-action do="print(domain: %domain_name -> %DnsSeen)" />
+        </state>
+
+        <state id="checked">
+            <use-metric id="dnsq" vd_get="domain_name" />
+
+            <condition expression="true" action="" next_state = "">
+                <timeout_set class="mine" key="domain_name" value="0" />
+            </condition>
+
+            <post-condition-action do="print(timeout checked!)" />
+        </state>
+    </event>
+	-->
+
+    <!--
+    <event type="timeout" class="yours">
+        <state id="normal">
+            <use-metric id="dnsq" vd_get="ip_dst" />
+
+            <condition expression="true" action="PrintTimeoutTrigger" next_state = "">
+                <timeout_set class="yours" key="ip_dst" value="0" />
+            </condition>
+
+            <post-condition-action do="" />
+
+        </state>
+    </event>
+    -->
+
+    <!--
+    <event type="packet" selector="proto udp and dst_port 53" primary-key="ip_src" attack_type="">
+	<state id="normal">
+		<use-metric id="dnsq" vm_update="ip_src" />
+
+		<condition expression="false" action="" next_state="" />
+
+		<post-condition-action do="" />
+	</state>
+
+	<state id="alert">
+		<use-metric id="dnsq" vm_update="ip_src" />
+
+		<condition expression="false" action="" next_state="" />
+
+		<post-condition-action do="" />
+	</state>
+    </event>
+    -->
+
+    <event type="packet" selector="proto tcp" primary-key="ip_src" attack_type="">
+	<state id="normal">
+		<use-metric id="dnsq" vm_get="ip_dst" />
+
+		<condition expression="false" action="" next_state="" />
+
+		<post-condition-action do="print(%packet_no %ip_src %src_port %ip_dst %dst_port)" />
+	</state>
+    </event>
+
+    <!-- event type="packet" selector="proto udp and src_port 53 and flags dns-nxdomain" primary-key="ip_dst" attack_type="">
+        <state id="normal">
+
+            <use-metric id="dnsq" vm_get="ip_dst" />
+            <use-metric id="dnsnx" vm_update="ip_dst" />
+
+            <condition expression="DnsQuery > 5 and DnsRatio > 0.2" action="print(%ip_dst ratio above .2 : %DnsRatio)" next_state = "alert">
+                <timeout_set class="mine" key="domain_name" value="2" />
+            </condition>
+
+            <post-condition-action do="" />
+        </state>
+        
+        <state id="alert">
+
+            <use-metric id="dnsq" vm_get="ip_dst" />
+
+            <condition expression="false" action="print(%ip_dst : more than 5 NX domain)" next_state = "" />
+
+            <post-condition-action do="" />
+        </state>
+
+    </event-->
+
+    <!--
+    <event type="packet" selector="" primary-key="ip_src" attack_type="">
+
+    </event>
+    -->
+
+
+    <!--
+    <event type="packet" selector="proto tcp and flags tcp-syn" primary-key="ip_src" >
+
+        <state id="training">
+            <use-metric id="tcps" vm_update="ip_src" />
+	
+            <condition expression="SynRate > 10" action="Print" next_state = "" />
+	
+            <post-condition-action do="" />
+      </state>
+	  
+    </event>
+    -->
+
+</botstream>

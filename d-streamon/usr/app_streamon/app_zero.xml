@@ -1,0 +1,63 @@
+<composition id="app_zero" app_id="app_zero">
+	<install>
+		<threadpool id="sniffer_thread" num_threads="1" >
+			<core number="0"/>
+		</threadpool>
+
+		<block id="pcap_reader" type="PcapSource" sched_type="active" threadpool="sniffer_thread">
+			<params>
+				<!--<source type="live" name="wlan0"/>-->
+				<source type="trace" name="/media/DATI/Tracce/pp1_large_host_142.pcap"/>
+				<!--<source type="trace" name="/media/EmmeHDD/DEMONS/tracce/pp1_large/pp1_large.pcap"/>-->
+				<!--bpf_filter expression="tcp"/-->
+			</params>
+		</block>
+
+
+		<block id="Factory" type="PacketPlus_Factory">
+			<params>
+				<metrics number = "8"/>
+			</params>
+		</block>
+
+
+		<block id="Metric01" type="Metric_Block">
+			<params>
+				<block_type proto="6" src_port="null" dst_port="null" tcp_flags="2" dns_flags ="null" metric_id="1" configuration="null"/>
+				<variation_detector status="on" size="20" nhash="8" bf_flowkey="ip_src-ip_dst" />
+				<variation_monitor status="on" size="20" nhash="8" time_window="60" life="1" tewma_flowkey="ip_src" />
+			</params>
+		</block>
+		
+		<block id="Metric02" type="Metric_Block">
+			<params>
+				<block_type proto="17" src_port="53" dst_port="null" tcp_flags="" metric_id="2" dns_flags ="0" configuration = "01"/>
+				<variation_detector status="on" size="16" nhash="4" bf_flowkey="ip_src-ip_dst" />
+				<variation_monitor status="on" size="18" nhash="4" time_window="60" life="1" tewma_flowkey="ip_dst" />
+				
+			</params>
+		</block>
+
+
+		<block id="Metric03" type="Metric_Block">
+			<params>
+				<block_type proto="17" src_port="53" dst_port="null" tcp_flags="" dns_flags ="0" metric_id="3" configuration = "02"/>
+				<variation_detector status="on" size="16" nhash="4" bf_flowkey="domain-answersIP" />
+				<variation_monitor status="on" size="18" nhash="4" time_window="60" life="1" tewma_flowkey="answersIP" />
+				
+			</params>
+		</block>
+
+		<block id="FeatureZero" type="FeatureLayerZero">
+			<params>
+			</params>
+		</block>
+
+
+		<connection src_block="pcap_reader" src_gate="sniffer_out" dst_block="Factory" dst_gate="in_Factory"/>
+		<connection src_block="Factory" src_gate="out_Factory" dst_block="Metric01" dst_gate="in_Metric_Block"/>
+		
+		<connection src_block="Metric01" src_gate="out_Metric_Block" dst_block="FeatureZero" dst_gate="in_FeatureLayerZero"/>
+		
+	</install>
+</composition>

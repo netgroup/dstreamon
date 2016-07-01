@@ -1,0 +1,129 @@
+<botstream>
+	<!-- <source type="trace" name="/home/demons/tracce/varie/lab_p2p.pcap"/> -->
+	<source type="live" name="eth0"/>
+
+	<statedef id="normal"/>
+	<statedef id="sospetto"/>
+	<statedef id="stronzo"/>
+
+	<metrics>
+		<!--
+		<metric name="udpcon">
+			<variation_detector status="on"/>
+			<variation_monitor status="off" type="tewma" window="60" life="1"/>
+		</metric>
+
+		<metric name="tcpcon">
+			<variation_detector status="on"/>
+			<variation_monitor status="off" type="tewma" window="60" life="1"/>
+		</metric>
+
+		<metric name="ports">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60" life="1"/>
+		</metric>
+
+		<metric name="hosts">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60" life="1"/>
+		</metric> -->
+
+		<metric name="m1">
+			<variation_detector status="off"/>
+			<variation_monitor status ="on" type="tewma" window="0.1" life="0.01" insert_value="ip_len"/>
+		</metric>
+
+		<metric name="m2">
+			<variation_detector status="off"/>
+			<variation_monitor status ="on" type="dleft" insert_value="ip_len" />
+		</metric>
+
+		<metric name="m3">
+			<variation_detector status="on"/>
+			<variation_monitor status ="on" type="dleft" />
+		</metric>
+
+		<metric name="m4">
+			<variation_detector status="on"/>
+			<variation_monitor status ="on" type="dleft" />
+		</metric>
+
+		<table name="t1" type="DLeft" value_type="uint32_t" nhash="8" shash="20" />
+	</metrics>
+
+	<features>
+		<feature name="f1" body="m1"/>
+		<feature name="f2" body="m2"/>
+		<feature name="f3" body="m3"/>
+		<feature name="f4" body="m4"/>
+	</features>
+
+	<event type="timeout" class="prova">
+		<state id="normal">
+			<use-metric id="m1" vm_update="ip_src"/>
+			<condition expression="true" action="print(scattato timeout)" next_state="" >
+				<timeout_set key="ip_src" class="prova" value="0" primary-key="" />
+			</condition>
+		</state>
+		<state id="sospetto">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<use-metric id="m2" vm_get="ip_src"/>
+			<use-metric id="m3" vm_get="ip_src"/>
+			<use-metric id="m4" vm_get="ip_src"/>
+			<condition expression="f1 > 0 and f2 > 0 and f3 > 0 and f4 > 0" action="print(scattato timeout),plot(pprova ip_src f1 f2 f3 f4)" next_state="" >
+				<timeout_set key="ip_src" class="prova" value="0" primary-key="" />
+			</condition>
+		</state>
+		<state id="stronzo">
+			<use-metric id="m1" vm_update="ip_src"/>
+			<condition expression="true" action="print(scattato timeout)" next_state="" >
+				<timeout_set key="ip_src" class="prova" value="0" primary-key="" />
+			</condition>
+		</state>
+
+	</event>
+
+	<event type="packet" selector="proto tcp and dst_port 80 and http_method 0x20544547U" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="m1" vm_update="ip_src"/>
+			<use-metric id="m2" vm_update="ip_src"/>
+			<use-metric id="m3" vd_update="http_host" vm_update="ip_src"/>
+			<use-metric id="m4" vd_update="http_url" vm_update="ip_src"/>
+				
+			<condition expression="f2 > 100" action="print(superata soglia per il flusso %ip_src)" next_state="sospetto" />
+			<condition expression="f1 gt 0 and f2 gt 0" action="print(f1: %f1 \tf2: %f2)" next_state="" />
+			<post-condition-action do="print(host: %http_host; url: %http_url)" />
+		</state>
+
+		<state id="sospetto">
+			<use-metric id="m1" vm_get="ip_src"/>	
+			<condition expression="t1(ip_src) &gt; 5" action="print(stato stronzo per il flusso %ip_src)" next_state="stronzo" />
+			<condition expression="true" action="print(flusso %ip_src sospetto; numero hosts %f3; numero urls %f4 \n),m2.reset(ip_src),t1(ip_src)+=1" next_state="normal" />
+		</state>
+		
+		<state id="stronzo">
+			<use-metric id="m1" vm_get="ip_src"/>	
+			<condition expression="true" action="print(sto nello stato stronzo. toraniamo a normal),m2.reset(ip_src),t1(ip_src)=0" next_state="normal">
+				<timeout_set key="ip_src" class="prova" value="2" primary-key="" />
+			</condition>
+		</state>		 
+	</event>
+	<!--
+	<event type="packet" selector="proto udp and src_port &gt; 1023 and dst_port &gt; 1023" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="udpcon" vd_update="ip_src-ip_dst"/>
+			<use-metric id="tcpcon" vd_get="ip_src-ip_dst"/>
+			<use-metric id="ports" vm_get="ip_src"/>
+			<use-metric id="hosts" vm_get="ip_src"/>
+			<use-metric id="metric4" vm_get="ip_src-ip_dst-src_port-dst_port"/>
+
+			<condition expression="udpcon_f == 1 and tcpcon_f == 1 and (feature4 gt 0.2 and feature4 lt 5)" action="" next_state="alert">
+				<tableupdate name="HT1" key="ip_src-ip_dst" value="1"
+			</condition>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+	-->
+
+	<!-- src_port="gt 1024" and dst_port="gt 1024" -->
+</botstream>

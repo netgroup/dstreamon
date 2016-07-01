@@ -1,0 +1,20 @@
+<composition id="dummy" app_id="boh">
+	<install>
+
+		<block id="counter" type="counter"  sched_type="active" threadpool="sniffer_thread" > 
+			<params>
+			</params>
+		</block>
+
+
+		<blockref local_block_id="sniffer" ext_composition_id="arch_input" ext_block_id="sniffer"/>
+
+
+		<connection src_block="sniffer" src_gate="sniffer_out" dst_block="counter" dst_gate="in_pkt"/>
+
+	</install>
+
+</composition>
+
+
+				

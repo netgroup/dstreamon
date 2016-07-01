@@ -1,0 +1,23 @@
+<composition id="arch_input">
+        <update>
+                <delete>
+                </delete>
+
+                <add>
+                </add>
+                <reconf>
+                                      
+                        <block id="sniffer" type="pcap_sniffer" sched_type="active" threadpool="sniffer_thread"> 
+                                <params>
+                                        <source type="live" name="wlan0"/>
+                                       
+                                </params>
+                        </block>
+
+                </reconf>
+
+        </update>
+</composition>
+
+
+

@@ -1,0 +1,69 @@
+<botstream>
+	<source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+
+
+	<statedef id="normal" />
+	<statedef id="count1"/>
+	<statedef id="count2"/>
+	<statedef id="calc"/>
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+
+		<metric name="m2">
+                        <variation_detector status="off"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+	</metrics>
+
+	<features>
+		<feature name="ratio" body="m2/m1"/>
+	</features>
+
+	<event type="timeout" class="std" primary-key="ip_src" >
+		<state id="count1">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="" next_state="count2">
+				<timeout_set class="std" key="ip_src" value="10"/>
+			</condition>
+		</state>
+
+		<state id="count2">
+			<use-metric id="m2" vm_get="ip_src"/>
+			<condition expression="true" action="" next_state="calc">
+				<timeout_set class="std" key="ip_src" value="0"/>
+			</condition>
+		</state>
+
+	</event>
+
+	<event type="packet" selector="proto tcp and dst_port 502" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="m1" vm_update="ip_src"/>
+			<condition expression="true" action="" next_state="count1">
+                                <timeout_set class="std" key="ip_src" value="10"/>
+                        </condition>
+		</state>
+		<state id="count1">
+			<use-metric id="m1" vm_update="ip_src"/>
+			<condition expression="true" action="" next_state="" />
+		</state>
+		<state id="count2">
+			<use-metric id="m2" vm_update="ip_src"/>
+			<condition expression="true" action="" next_state=""/>
+		</state>
+		<state id="calc">
+			<use-metric id="m2" vm_get="ip_src" />
+			<use-metric id="m1" vm_get="ip_src" />
+			<condition expression="ratio > 1.2" action="print(ALERT)" next_state="normal"/>
+			<condition expression="true" action="" next_state="normal"/>
+			<post-condition-action do="m1.reset() m2.reset()" />
+		</state>
+	</event>
+</botstream>
+
+
+

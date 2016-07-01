@@ -1,0 +1,142 @@
+<composition id="arch_input" app_id="boh">
+	<install>
+		<threadpool id="sniffer_thread_0" num_threads="1">
+			<core number="0"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_1" num_threads="1">
+			<core number="1"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_2" num_threads="1" >
+			<core number="2"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_3" num_threads="1" >
+			<core number="3"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_4" num_threads="1">
+			<core number="4"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_5" num_threads="1">
+			<core number="5"/>
+		</threadpool>
+
+		
+		<threadpool id="sniffer_thread_6" num_threads="1" >
+			<core number="6"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_7" num_threads="1">
+			<core number="7"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_8" num_threads="1">
+			<core number="8"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_9" num_threads="1" >
+			<core number="9"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_10" num_threads="1" >
+			<core number="10"/>
+		</threadpool>
+		
+<threadpool id="sniffer_thread_11" num_threads="1" >
+			<core number="11"/>
+		</threadpool>
+
+
+		<block id="sniffer0" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_0"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="0"/>
+                                </queues>
+                                                
+			</params>
+		</block>
+		<block id="sniffer1" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_1"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="1"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer2" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_2"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="2"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer3" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_3"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="3"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer4" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_4"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="4"/>
+                                </queues>
+                                                
+			</params>
+		</block>
+		<block id="sniffer5" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_5"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="5"/>
+                                </queues>
+                                                
+			</params>
+		</block>
+
+		
+		<block id="sniffer6" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_6"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="6"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer7" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_7"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="7"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer8" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_8"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="8"/>
+                                </queues>
+                                                
+			</params>
+		</block>
+		<block id="sniffer9" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_9"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="9"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer10" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_10"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="10"/>
+                                </queues>
+			</params>
+		</block>
+		
+<block id="sniffer11" type="MQPfring_na" sched_type="active" threadpool="sniffer_thread_11"> 
+			<params>
+                                <queues device="eth3">
+                                        <queue number="11"/>
+                                </queues>
+			</params>
+		</block>
+
+
+	</install>
+
+</composition>
+
+
+				

@@ -1,0 +1,85 @@
+<botstream>
+	<source type="trace" name="/mnt/.legacy/tracce/lab_p2p.pcap"/>
+	<!-- source type="live" name="eth0"/-->
+
+	<statedef id="normal"/>
+	<statedef id="alert"/>
+	<statedef id="classified" />
+
+	<metrics>
+		<metric name="udpcon">
+			<variation_detector status="on"/>
+			<variation_monitor status="off" type="tewma" window="60" life="1"/>
+		</metric>
+
+		<metric name="tcpcon">
+			<variation_detector status="on"/>
+			<variation_monitor status="off" type="tewma" window="60" life="1"/>
+		</metric>
+
+		<metric name="ports">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="3600" life="1"/>
+		</metric>
+
+		<metric name="hosts">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="3600" life="1"/>
+		</metric>
+
+		<metric name="metric4">
+			<variation_detector status="off"/>
+			<variation_monitor status ="on" type="tewma" window="3600" life="1"/>
+		</metric>
+
+		<!--table name="HT1" value_type="std::string" nhash="8" shash="20"/-->
+	</metrics>
+
+	<features>
+		<feature name="udpcon_f" body="udpcon"/>
+		<feature name="tcpcon_f" body="tcpcon"/>
+		<feature name="ports_f" body="ports"/>
+		<feature name="hosts_f" body="hosts"/>
+		<feature name="feature4" body="metric4"/>
+	</features>
+
+	<event type="packet" selector="proto udp and src_port &gt; 1023 and dst_port &gt; 1023" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="udpcon" vd_update="ip_src-ip_dst"/>
+			<use-metric id="tcpcon" vd_get="ip_src-ip_dst"/>
+			<use-metric id="ports" vm_get="ip_src"/>
+			<use-metric id="hosts" vm_get="ip_src"/>
+			<use-metric id="metric4" vm_get="ip_src-ip_dst-src_port-dst_port"/>
+
+			<condition expression="udpcon_f == 1 and tcpcon_f == 1 and (feature4 gt 0.2 and feature4 lt 5)" action="" next_state="alert">
+				<!--tableupdate name="HT1" key="ip_src-ip_dst" value="1"/-->
+			</condition>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+	<!-- src_port="gt 1024" and dst_port="gt 1024" -->
+	<event type="packet" selector="proto tcp and src_port &gt; 1023 and dst_port &gt; 1023" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="udpcon" vd_get="ip_src-ip_dst"/>
+			<use-metric id="tcpcon" vd_update="ip_src-ip_dst"/>
+			<use-metric id="ports" vm_get="ip_src"/>
+			<use-metric id="hosts" vm_get="ip_src"/>
+			<use-metric id="metric4" vm_update="ip_src-ip_dst-src_port-dst_port"/>
+			
+			<condition expression="udpcon_f == 1 and tcpcon_f == 1 and (feature4 gt 0.2 and feature4 lt 5)" action="" next_state="alert"/>
+
+			<post-condition-action do=""/>
+		</state>
+		<state id="alert">
+			<use-metric id="udpcon" vd_get="ip_src-ip_dst"/>
+			<use-metric id="tcpcon" vd_update="ip_src-ip_dst"/>
+			<use-metric id="ports" vd_update="ip_src-dst_port" vm_update="ip_src"/>
+			<use-metric id="hosts" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+			<use-metric id="metric4" vm_update="ip_src-ip_dst-src_port-dst_port"/>
+
+			<condition expression="ports_f gt 0.5 and hosts_f gt 0.5 and abs(ports_f - hosts_f) lt 10" action="print(%ip_src p2p suspect)" next_state="classified"/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+</botstream>

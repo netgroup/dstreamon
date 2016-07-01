@@ -1,0 +1,34 @@
+<botstream>
+	<source type="live" name="eth0"/>
+	<publisher protocol="tcp" ip="*" port="5560" />
+
+	<statedef id="default" />
+	<statedef id="suspicious" />
+	<statedef id="detected" />
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+	</metrics>
+
+	<features>
+		<feature name="nxd_cnt" body="m1"/>
+	</features>
+
+	<event type="packet" selector="proto udp and src_port 53 and flags dns-nxdomain" primary-key="ip_dst">
+		<state id="default" level="INFO" code="A0" description="DNS Hijacking Monitoring">
+			<use-metric id="m1" vm_update="ip_dst"/>
+			<condition expression="nxd_cnt > 4" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst name=%domain_name nxd_count=%nxd_cnt)' next_state="suspicious" />
+		</state>
+		<state id="suspicious" level="LOW" code="A1" description="DNS Hijacking Suspected">
+			<use-metric id="m1" vm_update="ip_dst"/>
+			<condition expression="nxd_cnt > 16" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst name=%domain_name nxd_count=%nxd_cnt)' next_state="detected" />
+		</state>
+		<state id="detected" level="HIGH" code="A2" description="DNS Hijacking Detected">
+			<use-metric id="m1" vm_update="ip_dst"/>
+			<condition expression="nxd_cnt > 32" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst name=%domain_name nxd_count=%nxd_cnt)' next_state="" />
+		</state>
+	</event>
+</botstream>

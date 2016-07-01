@@ -1,0 +1,5 @@
+start /home/fhuici/research/eu/demons/svn/Sources/blockmon/main/node/daemon/tests/compositions/snifferctr.xml
+update /home/fhuici/research/eu/demons/svn/Sources/blockmon/main/node/daemon/tests/compositions/snifferctr_update.xml
+read counter pktcnt bytecnt
+write counter reset 1
+

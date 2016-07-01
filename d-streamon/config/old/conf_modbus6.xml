@@ -1,0 +1,112 @@
+<botstream>
+        <source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+         <statedef id="normal" />
+	 <statedef id="suspicious"/>
+	 <statedef id="quarantine" />
+	 <statedef id="quarantine2" />
+
+        <metrics>
+                <metric name="m1">
+                        <variation_detector status="on"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+
+
+		 <metric name="m2">
+                        <variation_detector status="on"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+
+		 <metric name="pkt_rate">
+                        <variation_detector status="off"/>
+                        <variation_monitor status="on" type="tewma" window="60"/>
+                </metric>
+
+
+
+      </metrics>
+
+        <features>
+		<feature name="ratio" body="m2/m1"/>
+		 <feature name="pkt_rate_f" body="pkt_rate"/>
+        </features>
+
+
+
+	 <event type="timeout" class="standard" primary-key="ip_src" >
+                <state id="suspicious">
+                        <use-metric id="pkt_rate" vm_get="ip_src"/>
+
+			 <condition expression="pkt_rate_f &lt; 2" action="" next_state="normal">
+                                <timeout_set key="ip_src" class="standard" value="0" primary-key="" />
+                        </condition>
+
+			<condition expression="pkt_rate_f &gt; 2" action="print(Found sospicius number of %modbus_fc)" next_state="quarantine" >
+                                <timeout_set key="ip_src" class="standard" value="60" primary-key="" />
+                        </condition>
+                </state>
+
+		<state id="quarantine">
+                        <use-metric id="m1" vm_get="ip_dst"/>
+                        <condition expression="true" action="print(timeout expired releasing host %ip_src),exec(iptables -D OUTPUT -s %ip_src -d %ip_dst -j DROP)" next_state="suspicious" >
+                                <timeout_set key="ip_src" class="standard" value="0" primary-key="" />
+                        </condition>
+                </state>
+	 </event>
+
+	 <event type="timeout" class="standard2" primary-key="ip_dst" >
+		<state id="quarantine2">
+                        <use-metric id="m1" vm_get="ip_dst"/>
+                        <condition expression="true" action="print(timeout expired releasing host %ip_dst),exec(iptables -D OUTPUT -s  %ip_dst -d %ip_src -j DROP)" next_state="normal">
+				<timeout_set key="ip_src" class="standard2" value="0" primary-key="" />
+                        </condition>
+                </state>
+
+
+
+	 </event>
+
+
+
+	 <event type="packet" selector="proto tcp and dst_port 502 and modbus_fc 8 or
+                                        proto tcp and dst_port 502 and modbus_fc 17 or
+                                        proto tcp and dst_port 502 and modbus_fc 43" primary-key="ip_dst">
+                <state id="normal">
+                        <use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+                        <condition expression="true" action="print(Detected suspicious command: %modbus_fc %modbus_ti)" next_state="suspicious">
+                                   <timeout_set key="ip_src" class="standard" value="10" primary-key="" />
+                        </condition>
+		</state>
+
+		<state id="suspicious">
+                        <use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+                        <condition expression="true" action="" next_state="" />
+                </state>
+	
+
+
+	</event>
+
+	
+	 <event type="packet" selector="proto tcp and src_port 502" primary-key="ip_dst">
+                <state id="normal">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst-modbus_fc" vm_update="ip_dst"/>
+                        <condition expression="false" action="" next_state="" />               
+		</state>
+        </event>
+
+
+        <event type="packet" selector="proto tcp and src_port 502 and modbus_fc 129 or proto tcp and src_port 502 and modbus_fc 130
+				    or proto tcp and src_port 502 and modbus_fc 131 or proto tcp and src_port 502 and modbus_fc 132
+				    or proto tcp and src_port 502 and modbus_fc 133 or proto tcp and src_port 502 and modbus_fc 134
+                                    or proto tcp and src_port 502 and modbus_fc 143 or proto tcp and src_port 502 and modbus_fc 144"
+				    primary-key="ip_dst">
+                 <state id="normal">
+			<use-metric id="m1" vm_get="ip_dst"/>
+			<use-metric id="m2" vd_update="ip_src-ip_dst-modbus_fc" vm_update="ip_dst"/>
+                        <condition expression="ratio > 1" action="print(ALERT: %modbus_ti %modbus_fc )" next_state="quarantine2">
+				<timeout_set key="ip_dst" class="standard2" value="60" primary-key="" />
+			</condition>
+                </state>
+	</event>
+</botstream>

@@ -1,0 +1,27 @@
+<composition id="dummy" app_id="boh">
+	<install>
+		<threadpool id="counter_thread" num_threads="1" >
+			<core number="0"/>
+		</threadpool>
+
+		<block id="counter" type="counter"  sched_type="active" threadpool="counter_thread" > 
+			<params>
+			</params>
+		</block>
+
+
+		<blockref local_block_id="sniffer0" ext_composition_id="arch_input" ext_block_id="sniffer0"/>
+		<connection src_block="sniffer0" src_gate="sniffer_out" dst_block="counter" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer1" ext_composition_id="arch_input" ext_block_id="sniffer1"/>
+		<connection src_block="sniffer1" src_gate="sniffer_out" dst_block="counter" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer2" ext_composition_id="arch_input" ext_block_id="sniffer2"/>
+		<connection src_block="sniffer2" src_gate="sniffer_out" dst_block="counter" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer3" ext_composition_id="arch_input" ext_block_id="sniffer3"/>
+		<connection src_block="sniffer3" src_gate="sniffer_out" dst_block="counter" dst_gate="in_pkt"/>
+
+	</install>
+
+</composition>
+
+
+				

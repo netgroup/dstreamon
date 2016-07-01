@@ -1,0 +1,177 @@
+<botstream>
+	<!--source type="trace" name="/home/demons/tracce/didattica/1.pcap"/-->
+	<source type="live" name="eth1"/>
+
+	<statedef id="normal" />
+	<statedef id="monitored"/>
+	<statedef id="alert"/>
+	<statedef id="quarantine"/>
+
+	<metrics>
+		<metric name="pkt_rate">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60"/>
+		</metric>
+
+<!-- METICS USED TO COMPUTE STATISTICS -->
+		<metric name="pps_streamon">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_normal">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_monitored">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_alert">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_quarantine">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+<!-- END OF STATISTICS METRICS -->
+
+	</metrics>
+
+	<table name="tset" type="DLeft" key_type="" value_type="int" nhash="8" shash="20"/>
+	<table name="oldvalue" type="DLeft" key_type="" value_type="double" nhash="8" shash="20"/>
+
+	<features>
+		<feature name="pkt_rate_f" body="pkt_rate"/>
+		<feature name="pps_streamon_f" body="pps_streamon"/>
+		<feature name="pps_normal_f" body="pps_normal"/>
+		<feature name="pps_monitored_f" body="pps_monitored"/>
+		<feature name="pps_alert_f" body="pps_alert"/>
+		<feature name="pps_quarantine_f" body="pps_quarantine"/>
+	</features>
+
+	<event type="timeout" class="stat1s">
+		<state id="normal">
+			<use-metric id="pps_streamon" vm_get="ip_src"/>
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_monitored" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_quarantine" vm_get="ip_src"/>
+
+			<condition expression="true" action="print(%pps_streamon_f \t %pps_normal_f \t %pps_monitored_f \t %pps_alert_f \t %pps_quarantine_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_monitored.reset(),pps_alert.reset(),pps_quarantine.reset()"/>
+		</state>
+		<state id="monitored">
+			<use-metric id="pps_streamon" vm_get="ip_src"/>
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_monitored" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_quarantine" vm_get="ip_src"/>
+
+			<condition expression="true" action="print(%pps_streamon_f \t %pps_normal_f \t %pps_monitored_f \t %pps_alert_f \t %pps_quarantine_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_monitored.reset(),pps_alert.reset(),pps_quarantine.reset()"/>
+		</state>
+		<state id="alert">
+			<use-metric id="pps_streamon" vm_get="ip_src"/>
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_monitored" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_quarantine" vm_get="ip_src"/>
+
+			<condition expression="true" action="print(%pps_streamon_f \t %pps_normal_f \t %pps_monitored_f \t %pps_alert_f \t %pps_quarantine_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_monitored.reset(),pps_alert.reset(),pps_quarantine.reset()"/>
+		</state>
+		<state id="quarantine">
+			<use-metric id="pps_streamon" vm_get="ip_src"/>
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_monitored" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_quarantine" vm_get="ip_src"/>
+
+			<condition expression="true" action="print(%pps_streamon_f \t %pps_normal_f \t %pps_monitored_f \t %pps_alert_f \t %pps_quarantine_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_monitored.reset(),pps_alert.reset(),pps_quarantine.reset()"/>
+		</state>
+	</event>
+
+
+	<event type="timeout" class="ddos_burst">
+		<state id="monitored">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="" next_state="alert"/>
+
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="normal">
+				<timeout_set class="ddos_burst" key="ip_dst" value="0"/>
+			</condition>
+
+			<post-condition-action do="oldvalue(ip_dst)=pkt_rate_f"/>
+		</state>
+		<state id="alert">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="" next_state="quarantine">
+				<timeout_set class="ddos_burst" key="ip_dst" value="30"/>
+			</condition>
+
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="monitored"/>
+
+			<post-condition-action do="oldvalue(ip_dst)=pkt_rate_f"/>
+		</state>
+		<state id="quarantine">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+
+			<condition expression="true" action="" next_state="monitored"/>
+
+			<post-condition-action do="">
+				<timeout_set class="ddos_burst" key="ip_dst" value="10"/>
+			</post-condition-action>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp" primary-key="ip_dst">
+		<state id="normal">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<use-metric id="pps_normal" vm_update="ip_src"/>
+			<use-metric id="pps_streamon" vm_update="ip_src"/>
+
+			<condition expression="pps_streamon_f == 1" action="" next_state="">
+				<timeout_set class="stat1s" key="ip_src" value="1"/>
+			</condition>
+
+			<condition expression="pkt_rate_f &gt; 10 and !tset(ip_dst)" action="tset(ip_dst)=0" next_state="monitored"/>
+			<condition expression="pkt_rate_f &gt; 10 and tset(ip_dst) == 1" action="tset(ip_dst)=0" next_state="monitored"/>
+			<!--post-condition-action do="print(%ip_dst: normal value: %pkt_rate_f)"/-->
+		</state>
+
+		<state id="monitored">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<use-metric id="pps_monitored" vm_update="ip_src"/>
+			<use-metric id="pps_streamon" vm_update="ip_src"/>
+			
+			<condition expression="tset(ip_dst) == 0" action="tset(ip_dst)=1" next_state="">
+				<timeout_set class="ddos_burst" key="ip_dst" value="10"/>
+			</condition>
+			<!--post-condition-action do="print(%ip_dst: monitored value: %pkt_rate_f)"/-->
+		</state>
+		<state id="alert">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<use-metric id="pps_alert" vm_update="ip_src"/>
+			<use-metric id="pps_streamon" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<!--post-condition-action do="print(%ip_dst: alert value: %pkt_rate_f)"/-->
+		</state>
+		<state id="quarantine">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<use-metric id="pps_quarantine" vm_update="ip_src"/>
+			<use-metric id="pps_streamon" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<!--post-condition-action do="print(%ip_dst: quarantine value: %pkt_rate_f)"/-->
+		</state>
+	</event>
+</botstream>

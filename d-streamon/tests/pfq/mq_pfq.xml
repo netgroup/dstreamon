@@ -1,0 +1,182 @@
+<composition id="arch_input" app_id="boh">
+        <install>
+                <threadpool id="sniffer_thread0" num_threads="1" >
+                        <core number="0"/>
+                </threadpool>
+
+                <block id="sniffer0" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread0"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="0"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer0" gate="sniffer_out" ext_name="captured_pkts0"/>
+                
+                
+                
+                <threadpool id="sniffer_thread1" num_threads="1" >
+                        <core number="1"/>
+                </threadpool>
+
+                <block id="sniffer1" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread1"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="1"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer1" gate="sniffer_out" ext_name="captured_pkts1"/>
+                
+                <threadpool id="sniffer_thread2" num_threads="1" >
+                        <core number="2"/>
+                </threadpool>
+
+                <block id="sniffer2" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread2"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="2"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer2" gate="sniffer_out" ext_name="captured_pkts2"/>
+                
+                <threadpool id="sniffer_thread3" num_threads="1" >
+                        <core number="3"/>
+                </threadpool>
+
+                <block id="sniffer3" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread3"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="3"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer3" gate="sniffer_out" ext_name="captured_pkts3"/>
+
+
+                <threadpool id="sniffer_thread4" num_threads="1" >
+                        <core number="4"/>
+                </threadpool>
+
+                <block id="sniffer4" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread4"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="4"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer4" gate="sniffer_out" ext_name="captured_pkts4"/>
+
+                <threadpool id="sniffer_thread5" num_threads="1" >
+                        <core number="5"/>
+                </threadpool>
+
+                <block id="sniffer5" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread5"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="5"/>
+
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer5" gate="sniffer_out" ext_name="captured_pkts5"/>
+                <threadpool id="sniffer_thread6" num_threads="1" >
+                        <core number="6"/>
+                </threadpool>
+
+                <block id="sniffer6" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread6"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="6"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer6" gate="sniffer_out" ext_name="captured_pkts6"/>
+                
+                
+                
+                <threadpool id="sniffer_thread7" num_threads="1" >
+                        <core number="7"/>
+                </threadpool>
+
+                <block id="sniffer7" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread7"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="7"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer7" gate="sniffer_out" ext_name="captured_pkts7"/>
+                
+                <threadpool id="sniffer_thread8" num_threads="1" >
+                        <core number="8"/>
+                </threadpool>
+
+                <block id="sniffer8" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread8"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="8"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer8" gate="sniffer_out" ext_name="captured_pkts8"/>
+                
+                <threadpool id="sniffer_thread9" num_threads="1" >
+                        <core number="9"/>
+                </threadpool>
+
+                <block id="sniffer9" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread9"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="9"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer9" gate="sniffer_out" ext_name="captured_pkts9"/>
+
+
+                <threadpool id="sniffer_thread11" num_threads="1" >
+                        <core number="11"/>
+                </threadpool>
+
+                <block id="sniffer11" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread11"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="11"/>
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer11" gate="sniffer_out" ext_name="captured_pkts11"/>
+
+                <threadpool id="sniffer_thread10" num_threads="1" >
+                        <core number="10"/>
+                </threadpool>
+
+                <block id="sniffer10" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread10"> 
+                        <params>
+                                <queues device="eth3">
+                                        <queue number="10"/>
+
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer10" gate="sniffer_out" ext_name="captured_pkts10"/>
+        </install>
+
+</composition>
+
+
+				

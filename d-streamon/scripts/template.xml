@@ -1,0 +1,31 @@
+<composition id="{appname}" app_id="{appname}">
+    <install>
+
+{ThreadPools}
+
+{Sniffers}
+
+        {Events}
+
+        {MetricBlock}
+        
+        {Feature}
+
+        {Filtering}
+
+        {Exporter}
+
+        {AdditionalBlocks}
+
+        {SnifferFactoryConnections}
+
+        {MetricConnections}
+        
+        {FeatureFilteringConnections}
+
+        {FilteringExporterConnections}
+
+        {AdditionalConnections}
+        
+    </install>
+</composition>

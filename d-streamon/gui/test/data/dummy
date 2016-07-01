@@ -1,0 +1,31 @@
+<composition id="dummy" app_id="boh">
+ <install>
+  <threadpool id="sniffer_thread" num_threads="1" >
+   <core number="0"/>
+  </threadpool>
+
+  <block id="sniffer" type="pcap_sniffer" sched_type="active" threadpool="sniffer_thread"> 
+   <params>
+    <source type="live" name="eth0"/>
+    <!--bpf_filter expression="!tcp"/--> 
+   </params>
+  </block>
+  <block id="tcp-counter" type="counter"  thread_safe_mode="off" > 
+   <params>
+   </params>
+  </block>
+  <block id="other-counter" type="counter"  thread_safe_mode="off" > 
+   <params>
+   </params>
+  </block>
+  <block id="demux" type="demux"  thread_safe_mode="off" > 
+   <params>
+   </params>
+  </block>
+
+  <connection src_block="sniffer" src_gate="sniffer_out" dst_block="demux" dst_gate="in_pkt"/>
+  <connection src_block="demux" src_gate="out_other" dst_block="other-counter" dst_gate="in_pkt"/>
+  <connection src_block="demux" src_gate="out_tcp" dst_block="tcp-counter" dst_gate="in_pkt"/>
+
+ </install>
+</composition>

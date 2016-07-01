@@ -1,0 +1,111 @@
+<botstream>
+    <!-- source type="trace" name="/mnt/old/sal/tracce/nettare10_noVLAN.pcap" /-->
+    <source type="live" name="lo" />
+
+    <statedef id="normal" />
+
+    <metrics>
+        <metric name="ip_seen" config=""> 
+            <variation_detector status="on" />
+            <variation_monitor status="off" type="dleft"/>
+        </metric>
+
+        <metric name="dns_traffic" config="" >
+            <variation_detector status="off" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="dleft" insert_value="ip_len" window="60"/>
+        </metric>
+
+        <metric name="dph" config="">
+            <variation_detector status="on" />
+            <variation_monitor status="on" type="dleft" />
+        </metric>
+
+        <!-- metric name="dns_traffic_per_domain" config="" >
+            <variation_detector status="off" />
+            <variation_monitor status="on" type="dleft" insert_value="ip_len" window="60"/>
+        </metric-->
+
+        <metric name="hpd" config="" >
+            <variation_detector status="on" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="dleft" window="60"/>
+        </metric>
+
+        <!--metric name="pktlen" config=""> 
+            <variation_detector status="off" />
+            <variation_monitor status="off" type="dleft"/>
+        </metric-->
+
+<!--
+        <table name="tabx" type="DLeft" key_type="" value_type="uint32_t" nhash="8" shash="20">
+        </table>
+-->
+
+    </metrics>
+
+
+    <features>
+      <feature name="IpSeen" body="ip_seen" />
+      <feature name="DnsTraffic" body="dns_traffic"/>
+      <!-- feature name="DnsTrafficDomain" body="dns_traffic_per_domain"/-->
+      <feature name="DomainPerHost" body="dph"/>
+      <feature name="HostnamePerDomain" body="hpd"/>
+      <!-- feature name="RequestSize" body="pktlen" /-->
+    </features>
+
+    <event type="timeout" class="stats" primary-key="domain_name" attack_type="">
+    <state id="normal">
+        <!-- use-metric id="dns_traffic" vm_get="ip_src" /-->
+        <!-- use-metric id="dns_traffic_per_domain" vm_get="domain_name" /-->
+		<use-metric id="hpd" vm_get="domain_second_level" />
+        <use-metric id="dns_traffic" vm_get="ip_dst" />
+
+        <condition expression="true" action="print(DNS Traffic: %DnsTraffic - VPD %domain_name => %DnsTrafficDomain - HPD: %HostnamePerDomain)" next_state="" />
+    </state>
+    </event>
+
+    <event type="packet" selector="proto udp and dst_port 53" primary-key="ip_src" attack_type="">
+	<state id="normal">
+        <use-metric id="ip_seen" vd_update="ip_src" />
+        <!-- 5.1.1 Size of request -->
+        <!-- use-metric id="pktlen" vm_get="ip_len" /-->
+        <!-- 5.2.1 Volume of DNS traffic per IP address -->
+		<use-metric id="dns_traffic" vm_update="ip_src" />
+        <!-- 5.2.2 Volume of DNS traffic per domain -->
+		<!-- use-metric id="dns_traffic_per_domain" vm_update="domain_name" /-->
+        <!-- 5.2.3 Number of hostnames per domain -->
+		<!-- use-metric id="hpd" vd_update="domain_name" vm_update="domain_second_level" /-->
+        <!-- Different Domain Per Host -->
+		<use-metric id="dph" vd_update="ip_src-domain_name" vm_update="ip_src" />
+
+        <condition expression="IpSeen == 0" action="" next_state="">
+            <timeout_set class="stats" key="ip_src" value="5" />
+        </condition>
+
+		<!-- condition expression="true" action="print(QUERY %ip_src - DNS Bytes: %DnsTraffic - Domain: %domain_name - SLD: %domain_second_level - [bytes: %DnsTrafficDomain] )" next_state="" /-->
+
+		<post-condition-action do="" />
+	</state>
+
+    </event>
+
+    <event type="packet" selector="proto udp and src_port 53" primary-key="ip_dst" attack_type="">
+	<state id="normal">
+        <!-- 5.1.1 Size of response -->
+        <use-metric id="pktlen" vm_get="ip_len" />
+        <!-- 5.2.1 Volume of DNS traffic per IP address -->
+		<use-metric id="dns_traffic" vm_update="ip_dst" />
+        <!-- 5.2.2 Volume of DNS traffic per domain -->
+		<use-metric id="dns_traffic_per_domain" vm_update="domain_name" />
+        <!-- 5.2.3 Number of hostnames per domain -->
+		<use-metric id="hpd" vd_update="domain_name" vm_update="domain_second_level" />
+
+        <condition expression="false" action="" next_state="" />
+
+		<!-- condition expression="true" action="print(RESPO %ip_dst - DNS Bytes: %DnsTraffic - Domain: %domain_name [bytes: %DnsTrafficDomain - hpd: %HostnamePerDomain] )" next_state="" /-->
+
+		<post-condition-action do="" />
+	</state>
+
+    </event>
+
+</botstream>

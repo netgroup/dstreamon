@@ -1,0 +1,43 @@
+<botstream>
+	<source type="live" name="wlan0"/>
+	<publisher protocol="tcp" ip="*" port="5560" />
+
+	<statedef id="default" />
+	<statedef id="suspicious" />
+	<statedef id="detected" />
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+	</metrics>
+
+	<features>
+		<feature name="ports" body="m1"/>
+	</features>
+
+	<event type="timeout" class="watchports" primary-key="ip_src-ip_dst">
+		<state id="suspicious" level="WARN" code="D1" description="Port Scan Detected">
+			<use-metric id="m1" vm_get="ip_src-ip_dst" />
+			<condition expression="ports > 2" action="Publish(alert, Host %ip_src contacted more than 5 ports/s on %ip_dst);Publish(raw,raw)" next_state="detected">
+				<timeout_set class="watchports" key="ip_src-ip_dst" value="0" />
+			</condition>
+			<condition expression="true" action="m1.reset(ip_src-ip_dst)" next_state="" />
+		</state>	
+	</event>
+
+	<event type="packet" selector="proto tcp and flags tcp-syn" primary-key="ip_src-ip_dst">
+		<state id="default" level="INFO" code="D0" description="Port Scan Monitoring">
+			<use-metric id="m1" vd_update="ip_src-ip_dst-dst_port" vm_update="ip_src-ip_dst"/>
+			<condition expression="ports > 2" action="Publish(log, Set watchport for %ip_src => %ip_dst);m1.reset(ip_src-ip_dst)" next_state="suspicious">
+				<timeout_set class="watchports" key="ip_src-ip_dst" value="1" />
+			</condition>
+			<condition expression="true" action="Publish(log, %ip_src => %ip_dst on port %dst_port)" />
+		</state>
+		<state id="suspicious" level="WARN" code="D1" description="Port Scan Detected">
+			<use-metric id="m1" vd_update="ip_src-ip_dst-dst_port" vm_update="ip_src-ip_dst"/>
+			<condition expression="true" action="Publish(log, %ip_src => %ip_dst on port %dst_port)" />
+		</state>
+	</event>
+</botstream>

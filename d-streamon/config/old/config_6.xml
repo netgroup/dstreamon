@@ -1,0 +1,124 @@
+<botstream>
+	<source type="live" name="eth0"/>
+
+    	<statedef id="default" />
+    	<statedef id="5000contacted" />
+    	<statedef id="7000contacted" />
+    	<statedef id="allowed" />
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60" life="1" />
+			<!-- variation_monitor status="on" type="dleft"/ -->
+		</metric>
+	</metrics>
+
+	<features>
+		<feature name="conn_rate" body="m1"/>
+	</features>
+
+	<event type="timeout" class="reset">
+		<state id="5000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(timeout expired host %ip_src resetting)" next_state="default" >
+				<timeout_set key="ip_src" class="reset" value="0" primary-key="" />
+			</condition>
+		</state>
+		<state id="7000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(timeout expired host %ip_src resetting)" next_state="default" >
+				<timeout_set key="ip_src" class="reset" value="0" primary-key="" />
+			</condition>
+		</state>
+		<state id="allowed">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(timeout expired host %ip_src resetting),exec(iptables -D INPUT -s %ip_src -p tcp --dport 22 -j ACCEPT)" next_state="default" >
+				<timeout_set key="ip_src" class="reset" value="0" primary-key="" />
+			</condition>
+		</state>
+	</event>	
+
+	<event type="packet" selector="proto tcp and flags tcp-syn and dst_port 5000" primary-key="ip_src">
+		<state id="default">	
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(host %ip_src first knock)" next_state="5000contacted">
+				<timeout_set key="ip_src" class="reset" value="5" primary-key="" />
+			</condition>
+		</state>
+		<state id="5000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="7000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="allowed">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and flags tcp-syn and dst_port 7000" primary-key="ip_src">
+		<state id="default">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="5000contacted">	
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(host %ip_src second knock)" next_state="7000contacted">
+				<timeout_set key="ip_src" class="reset" value="5" primary-key="" />
+			</condition>
+		</state>
+		<state id="7000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="allowed">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and flags tcp-syn and dst_port 4000" primary-key="ip_src">
+		<state id="default">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="5000contacted">	
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+		<state id="7000contacted">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(host %ip_src third knock Allowing ssh...),exec(iptables -I INPUT -s %ip_src -p tcp --dport 22 -j ACCEPT)" next_state="allowed">
+				<timeout_set key="ip_src" class="reset" value="60" primary-key="" />
+			</condition>
+		</state>
+		<state id="allowed">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and flags tcp-syn" primary-key="ip_src">
+		<state id="default">
+			<use-metric id="m1" vd_update="ip_src-dst_port" vm_update="ip_src"/>
+			<condition expression="conn_rate > 20" action="print(host %ip_src reached conn_rate thr)" next_state="default" />
+		</state>
+		<state id="5000contacted">	
+			<use-metric id="m1" vd_update="ip_src-dst_port" vm_update="ip_src"/>
+			<condition expression="conn_rate > 20" action="print(host %ip_src reached conn_rate thr)" next_state="default" />
+		</state>
+		<state id="7000contacted">
+			<use-metric id="m1" vd_update="ip_src-dst_port" vm_update="ip_src"/>
+			<condition expression="conn_rate > 20" action="print(host %ip_src reached conn_rate thr)" next_state="default" />
+		</state>
+		<state id="allowed">
+			<use-metric id="m1" vd_update="ip_src-dst_port" vm_update="ip_src"/>
+			<condition expression="false" action="" next_state="" />
+		</state>
+	</event>
+
+</botstream>

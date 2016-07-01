@@ -1,0 +1,50 @@
+<botstream>
+	<source type="trace" name="/home/demons/Pubblici/prova_dns2.pcap"/>
+	<!--<source type="live" name="eth1"/-->
+
+	<statedef id="normal"/>
+
+	<additional_block name="Forwarder">
+		<socket path="/home/demons/Demons/botstream/CEDError/echo_socket"/>
+		<feed atype="burst" name="domain_name" content="ip_dst" export="always"/>
+	</additional_block>
+
+        <table name="tab" type="DLeft" key_type="" value_type="double" nhash="8" shash="20"/>
+	<table name="ftab" type="DLeft" key_type="" value_type="double" nhash="8" shash="20"/>
+
+	<metrics>
+		<metric name="req_per_domain">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="60" life="1"/>
+		</metric>
+		<metric name="new_domain">
+			<variation_detector status="on"/>
+			<variation_monitor status="off" type="tewma"/>
+		</metric>
+	</metrics>
+
+	<features>
+		<feature name="req_per_domain_f" body="req_per_domain"/>
+		<feature name="new_domain_f" body="new_domain"/>
+	</features>
+<!--
+	<event type="timeout" class="cede">
+		<state id="normal">
+			<use-metric id="new_domain" vd_get="domain_name"/>
+		<condition expression="ftab(domain_name)&gt;tab(domain_name)" action="Suspect" next_state=""/>
+			<post-condition-action do="tab(domain_name)=ftab(domain_name)"/>
+		</state>
+	</event>
+-->
+
+	<event type="packet" selector="proto udp and src_port 53 and flags dns-noerror" primary-key="domain_name" attack_type="burst">
+		<state id="normal">
+			<use-metric id="req_per_domain" vm_update="domain_name"/>
+			<use-metric id="new_domain" vd_update="domain_name"/>
+			<condition expression="new_domain_f == 0" action="Suspect, Export" next_state="">
+		                <!-- <timeout_set class="cede" key="domain_name" value="2"/> -->
+			</condition>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+</botstream>

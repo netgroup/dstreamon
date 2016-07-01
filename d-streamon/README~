@@ -1,0 +1,74 @@
+STREAMON PROTOTYPE COMPILE GUIDE
+================================
+
+StreaMON Prototype is actually based on Blockmon (see blockmon.README for more info)
+and written in C++11 language.
+
+This guide will assume that you've already downloaded the code from repository
+somewhere in your PC.
+
+Let's call this location $STREAMON_ROOT.
+
+DEPENDENCIES REQUIREMENTS
+-------------------------
+
+The following packages are required to compile StreaMON:
+
+- cmake
+- g++
+- libboost-dev
+- libpcap-dev
+
+On Ubuntu or other Debian-based distributions you can retreive packages the following way:
+
+$ sudo apt-get update
+$ sudo apt-get install <pkgs>
+
+COMPATIBILITY
+-------------
+StreaMON should compile well in all major new distributions, however was tested on:
+    - Debian 8.2 (Jessie) with GCC 4.9.2
+    - Arch Linux with GCC 5.2.0 (at October 22th 2015).
+
+HOW TO COMPILE
+--------------
+
+1) Enter in $STREAMON_ROOT folder and type the following command:
+        $ cmake .
+       
+        (yes, with the dot, not a mistake)
+
+2) After cmake do the following:
+        $ make -j<number of cpu cores that your pc has+1>
+
+        Example: make -j5 (if you have a 4-core CPU)
+
+3) The compilation process starts and end after a while, if all goes well you should see the following message:
+
+        Linking CXX executable blockmon
+        [100%] Built target blockmon
+
+
+RUN STREAMON
+------------
+After compilation you can run streamon configurations under the config/ folder, using the commands:
+
+$ ./start.sh config/<config_name>
+
+Note that for LIVE capture root privileges are required, you can use "sudo":
+
+$ sudo ./start.sh config/<config_name>
+
+OTHER NOTES ON COMPILATION
+--------------------------
+
+By default StreaMON is compiled with the following flags:
+
+-std=c++11 -O3 -march=native -Wall -flto
+
+You can adjust these as you prefere in CMakeLists.txt.
+
+FLTO option is the Link-Time Optimization that reduce executable size removing not used code/functions, 
+for instance with FLTO on the blockmon executable size goes from ~12M to ~900K.
+
+As a cons the linking time increase.

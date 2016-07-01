@@ -1,0 +1,22 @@
+<composition id="dummy" app_id="boh">
+	<install>
+
+		<block id="counter" type="counter"  > 
+			<params>
+			</params>
+		</block>
+
+
+		<blockref local_block_id="sniffer" ext_composition_id="arch_input" ext_block_id="sniffer"/>
+		<blockref local_block_id="sniffer2" ext_composition_id="arch_input" ext_block_id="sniffer2"/>
+
+		<connection src_block="sniffer2" src_gate="generator_out" dst_block="counter" dst_gate="in_pkt"/>
+
+		<connection src_block="sniffer" src_gate="generator_out" dst_block="counter" dst_gate="in_pkt"/>
+
+	</install>
+
+</composition>
+
+
+				

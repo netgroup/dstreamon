@@ -1,0 +1,25 @@
+<composition id="mysnifferctr">
+  <update>
+
+<!--
+    These sections are optional
+    <delete>
+    </delete>
+
+    <add>
+    </add>-->
+
+    <reconf>
+     <!-- note: id, sched_type and threadpool are MANDATORY even if they don't change -->
+      <block id="sniffer" sched_type="active" threadpool="sniffer_thread"> 
+        <params>
+          <source type="live" name="wlan0" />
+        </params>
+      </block>
+    </reconf>
+
+  </update>
+</composition>
+
+
+

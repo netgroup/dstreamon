@@ -1,0 +1,31 @@
+<composition id="app_BF_SrcDst" app_id="app_BF_SrcDst">
+	<install>
+		<threadpool id="sniffer_thread" num_threads="1" >
+			<core number="0"/>
+		</threadpool>
+<!--
+		<block id="sniffer" type="PcapSource" sched_type="active" threadpool="sniffer_thread">
+			<params>
+				<source type="live" name="eth0"/>
+				<bpf_filter expression="tcp"/> 
+			</params>
+		</block>
+-->
+		<block id="pcap_reader" type="PcapSource" sched_type="active" threadpool="sniffer_thread">
+			<params>
+				<source type="trace" name="/home/daniele/Scrivania/Tracce/pp1_large_host64.pcap"/>
+				<bpf_filter expression="(tcp[tcpflags] & (tcp-syn) != 0) and (tcp[tcpflags] & (tcp-ack) == 0)"/>
+			</params>
+		</block>
+
+		<block id="BF_SrcDst" type="BF_SrcDst">
+			<params>
+				<time_window second="60"/>
+				<decrement value="50"/>
+			</params>
+		</block>
+
+		<connection src_block="pcap_reader" src_gate="sniffer_out" dst_block="BF_SrcDst" dst_gate="in_pkt_BF"/>
+		
+	</install>
+</composition>

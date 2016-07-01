@@ -1,0 +1,36 @@
+<composition id="dummy" app_id="boh">
+	<install>
+
+		<block id="counter_0" type="counter"   > 
+			<params>
+			</params>
+		</block>
+
+		<block id="counter_1" type="counter" > 
+			<params>
+			</params>
+		</block>
+
+		<block id="counter_2" type="counter" > 
+			<params>
+			</params>
+		</block>
+		<block id="counter_3" type="counter" > 
+			<params>
+			</params>
+		</block>
+		<blockref local_block_id="sniffer0" ext_composition_id="arch_input" ext_block_id="sniffer0"/>
+		<connection src_block="sniffer0" src_gate="sniffer_out" dst_block="counter_0" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer1" ext_composition_id="arch_input" ext_block_id="sniffer1"/>
+		<connection src_block="sniffer1" src_gate="sniffer_out" dst_block="counter_1" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer2" ext_composition_id="arch_input" ext_block_id="sniffer2"/>
+		<connection src_block="sniffer2" src_gate="sniffer_out" dst_block="counter_2" dst_gate="in_pkt"/>
+		<blockref local_block_id="sniffer3" ext_composition_id="arch_input" ext_block_id="sniffer3"/>
+		<connection src_block="sniffer3" src_gate="sniffer_out" dst_block="counter_3" dst_gate="in_pkt"/>
+
+	</install>
+
+</composition>
+
+
+				

@@ -1,0 +1,14 @@
+[DEFAULT]
+bm_basepath = /home/fhuici/research/eu/demons/svn/Sources/blockmon/main/node
+
+[MAIN]
+bm_process_exec = %(bm_basepath)s/daemon/core/bmprocess.py
+logging_dir = /home/fhuici/blockmon/log
+tmp_dir = /home/fhuici/blockmon/tmp
+
+[NETWORK]
+listening_port = 7080
+
+[BLOCKS]
+block_ext = .cpp
+blocks_path = %(bm_basepath)s/blocks

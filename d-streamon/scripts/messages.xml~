@@ -1,0 +1,31 @@
+
+<messages>
+  <message type="packet">
+<field name=" " id="11111" />
+    <field name="ip_src" id="0" />
+    <field name="ip_dst" id="1" />
+    <field name="src_port" id="2" />
+    <field name="dst_port" id="3" />
+    <field name="proto" id="4" />
+    <field name="flags" id="5" />
+    <field name="domain_name" id="6" />
+    <field name="domain_addr" id="7" />
+    <field name="http_url" id="6" />
+    <field name="http_method" id="7" />
+    <field name="modbus_ti" id="6"/>
+    <field name="modbus_fc" id="7"/>
+    <field name="packet_no" id="8" />
+    <field name="ip_len" id="9" />
+    <field name="domain_second_level" id="10" />
+    <field name="http_host" id="10" />	
+  </message>
+
+
+  <message type="cdr">
+    <field name="cdr_src" id="0" />
+    <field name="cdr_dst" id="1" />
+    <field name="cdr_dur" id="2" />
+    <field name="cdr_res" id="3" />
+  </message>
+
+</messages>

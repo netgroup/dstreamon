@@ -1,0 +1,37 @@
+<botstream>
+	<source type="live" name="eno16777736"/>
+	<publisher protocol="tcp" ip="*" port="5560" />
+
+	<statedef id="default" />
+	<statedef id="suspect" />
+	<statedef id="detect" />
+
+	<metrics>
+	  <metric name="m1">
+	    <variation_detector status="on" />
+	    <variation_monitor status="on" type="tewma" window="30" />
+	  </metric>
+	</metrics>
+
+	<features>
+	  <feature name="rate" body="m1"/>
+	</features>
+
+	<event type="packet" selector="proto tcp and dst_port 502 and modbus_fc 8" primary-key="ip_src">
+	  <state id="default" level="INFO" code="E0" description="Modbus Device Scanning Monitoring">
+	    <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+	    <condition expression="rate &gt; 0" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst rate=%rate dst_port=%dst_port)' next_state="suspect" />
+	  </state>
+
+	  <state id="suspect" level="LOW" code="E1" description="Modbus Device Scanning Suspected">
+	    <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src" />
+	    <condition expression="rate &gt; 2" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst rate=%rate dst_port=%dst_port)' next_state="detect" />
+	  </state>
+
+	  <state id="detect" level="HIGH" code="E2" description="Modbus Device Scanning Detected">
+	    <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src" />
+	    <condition expression="rate &gt; 3" action='Publish(log,%ts %client.id %state.code %state.level \"%state.description\" ip_src=%ip_src ip_dst=%ip_dst rate=%rate dst_port=%dst_port)' next_state="" />
+	  </state>
+	</event>
+</botstream>
+

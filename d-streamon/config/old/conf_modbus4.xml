@@ -1,0 +1,56 @@
+<botstream>
+        <source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+
+
+        <statedef id="default" />
+	<statedef id="count1" />
+	<statedef id="count2" />
+
+        <metrics>
+                <metric name="m1">
+                        <variation_detector status="off"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+                <metric name="m2">
+                        <variation_detector status="off"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+        </metrics>
+
+
+        <features>
+                <feature name="ratio" body="m2/m1"/>
+        </features>
+
+        <event type="timeout" class="rollback" selector=" proto tcp and dst_port 502" primary-key="ip_dst">
+                <state id="count1">
+                        <use-metric id="m1" vm_update="ip_dst"/>
+                        <condition expression="true" action="" next_state="count2" >
+                                <timeout_set key="ip_src" class="rollback" value="10" primary-key="" />
+                        </condition>
+                </state>
+        </event>
+
+	<event type="timeout"  selector=" proto tcp and dst_port 502" primary-key="ip_src">
+                <state id="count2">
+                        <use-metric id="m2" vm_update="ip_src"/>
+                        <condition expression="true" action="" next_state="default" >
+                                <timeout_set key="ip_dst" class="rollback" value="0" primary-key="" />
+                        </condition>
+                </state>
+        </event>
+
+
+        <event type="packet" selector="proto tcp and src_port 502 or proto tco and dst_port 502" primary-key="ip_src">
+                <state id="default">
+                        <use-metric id="m1" vm_get="ip_dst"/>
+                        <use-metric id="m2" vm_update="ip_src"/>
+                        <condition expression="ratio > 1.2" action="print(ALERT %modbus_fc %modbus_ti %ip_dst %ip_src)" next_state="count1" >
+				 <timeout_set key="ip_dst" class="rollback" value="10" primary-key="" />
+                        </condition>
+			<post-condition-action do= "m1.reset() m2.reset" />     
+                </state>
+        </event>
+
+</botstream>
+

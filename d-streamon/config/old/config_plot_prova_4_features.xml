@@ -1,0 +1,71 @@
+
+<botstream>
+	<source type="live" name="eth0"/>
+
+    	<statedef id="default" />
+    	<statedef id="plot" />
+    	<statedef id="attack" />
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60" life="1" />
+			<!-- variation_monitor status="on" type="dleft"/ -->
+		</metric>
+	</metrics>
+
+	<features>
+		<feature name="conn_rate" body="m1"/>
+		<feature name="f2" body="m1 + 4"/>
+        <feature name="f3" body="m1 / 2"/>
+		<feature name="f4" body="m1 + 2"/>
+	</features>
+
+    <event type="timeout" class="plot_to">
+		<state id="plot">
+			<use-metric id="m1" vm_get="ip_src"/>
+            <condition expression="true" action="plot(test_plot ip_src conn_rate f2 f3 f4)" next_state="" />
+		</state>
+        <state id="attack">
+			<use-metric id="m1" vm_get="ip_src"/>
+            <condition expression="true" action="plot(test_plot ip_src conn_rate f2 f3 f4)" next_state="">
+            </condition>
+        </state>
+	</event>
+
+
+	<event type="timeout" class="rollback">
+		<state id="attack">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<condition expression="true" action="print(timeout expired host %ip_src returning to default state),exec(iptables -D INPUT -s %ip_src -d %ip_dst -j DROP)" next_state="default" >
+				<timeout_set key="ip_src" class="rollback" value="0" primary-key="" />
+			</condition>
+		</state>
+	</event>
+    
+
+	<event type="packet" selector="proto tcp and flags tcp-syn" primary-key="ip_src">
+		<state id="default">
+			<use-metric id="m1" vd_update="ip_src-ip_dst-dst_port" vm_update="ip_src" />
+            <condition expression="true" action="print(moving to plot)" next_state="plot" >
+                <timeout_set key="ip_src" class="plot_to" value="1" primary-key="" />
+            </condition>
+        </state>
+            
+        <state id="plot">
+			<use-metric id="m1" vd_update="ip_src-ip_dst-dst_port" vm_update="ip_src" />
+            <condition expression="conn_rate > 300" action="print(detected host %ip_src port scanning %ip_dst),exec(iptables -A INPUT -s %ip_src -d %ip_dst -j DROP)" next_state="attack">
+                <timeout_set key="ip_src" class="rollback" value="10" primary-key="" />
+            </condition>
+		</state>
+
+		<state id="attack">
+			<use-metric id="m1" vd_update="ip_src|ip_dst|tcp_dport" vm_update="ip_src" />
+            <!-- condition expression="true" action="print(port scanner %ip_src trying to contact host %ip_dst:%dst_port)" next_state="" /-->
+            <condition expression="false" action="" next_state="" />
+
+		</state>
+
+	</event>
+
+</botstream>

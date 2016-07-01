@@ -1,0 +1,60 @@
+<botstream>
+        <source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+         <statedef id="default" />
+	 <statedef id="suspicious" />
+
+        <metrics>
+                <metric name="m1">
+                        <variation_detector status="on"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+
+
+		 <metric name="m2">
+                        <variation_detector status="on"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+
+      </metrics>
+
+        <features>
+		<feature name="ratio" body="m2/m1"/>
+        </features>
+
+
+
+	 <event type="timeout" class="rollback" primary-key="ip_dst" >
+                <state id="suspicious">
+                        <use-metric id="m1" vm_get="ip_dst"/>
+                        <condition expression="true" action="print(timeout expired releasing host %ip_src),exec(iptables -D OUTPUT -s %ip_src -j DROP)" next_state="default" >
+                                <timeout_set key="ip_src" class="rollback" value="0" primary-key="" />
+                        </condition>
+                </state>
+        </event>
+
+
+
+	 <event type="packet" selector="proto tcp and src_port 502" primary-key="ip_dst">
+                <state id="default">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst-modbus_fc" vm_update="ip_dst"/>
+                        <condition expression="false" action="" next_state="" />
+                </state>
+        </event>
+
+
+        <event type="packet" selector="proto tcp and src_port 502 and modbus_fc 129 or proto tcp and src_port 502 and modbus_fc 130
+				    or proto tcp and src_port 502 and modbus_fc 131 or proto tcp and src_port 502 and modbus_fc 132
+				    or proto tcp and src_port 502 and modbus_fc 133 or proto tcp and src_port 502 and modbus_fc 134
+                                    or proto tcp and src_port 502 and modbus_fc 143 or proto tcp and src_port 502 and modbus_fc 144"
+				    primary-key="ip_dst">
+                 <state id="default">
+			<use-metric id="m1" vm_get="ip_dst"/>
+			<use-metric id="m2" vd_update="ip_src-ip_dst-modbus_fc" vm_update="ip_dst"/>
+                        <condition expression="ratio > 1" action="print(ALERT: %modbus_ti %modbus_fc )" next_state="suspicious">
+				<timeout_set key="ip_src" class="rollback" value="60" primary-key="" />
+			</condition>
+                </state>
+        </event>
+
+</botstream>
+

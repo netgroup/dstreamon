@@ -1,0 +1,655 @@
+/**
+ * <blockinfo type="Filtro_Block" is_active="False" thread_exclusive="False">
+ *   <humandesc>
+ *   Riceve un messaggio e restituisce solo i messaggi TCP o UDP
+ *   </humandesc>
+ *
+ *   <shortdesc>Filtro TCP</shortdesc>
+ *
+ *   <gates>
+ *     <gate type="input" name="in_pkt_filtro" msg_type="Packet" m_start="0" m_end="0" />
+ *     <gate type="output" name="filtro_TCPout" msg_type="Packet" m_start="0" m_end="0" />
+ *     <gate type="output" name="filtro_UDPout" msg_type="Packet" m_start="0" m_end="0" />
+ *   </gates>
+ *
+ *   <paramsschema>
+ *    element params {
+ *      }
+ *   </paramsschema>
+ *
+ *   <paramsexample>
+ *     <params>
+ *     </params>
+ *   </paramsexample>
+ *
+ *   <variables>
+ *   </variables>
+ *
+ * </blockinfo>
+ */
+#include <Block.hpp>
+#include <BlockFactory.hpp>
+#include <Packet.hpp>
+#include <ClassId.hpp>
+#include <arpa/inet.h>
+#include <sstream>
+#include <unordered_map>
+
+#include <streamon/Streamon.hpp>
+#include <lib_botstream/Timeout.hpp>
+
+#include <dlfcn.h>
+
+
+namespace bm
+{
+  struct event
+  {
+    int Id;
+    std::list<req_tuple>* Requirements; // matching function
+
+    struct key_pair
+    {
+      short TableId;          // if -1 take Flowkey ID
+      uint16_t FlowkeyId;     // the entry of map to use as key
+
+    } Key;
+
+  };
+
+
+  std::unordered_map<std::string, int> TokenMap;
+
+  int BuiltinTokens = 0;
+  int LastTokenId = 0;
+
+  std::vector<int> FlowkeyRules[8];
+
+  DLeft<state_data> states_map(8, 20);
+
+  // IDictionary<std::string>* tables[8];
+ 
+  TimeoutManager tmanager;
+
+
+    class PacketPlus_Factory: public Block
+	{
+		public:
+			/*
+			 * costruttore
+			 */
+			PacketPlus_Factory(const std::string &name, bool) : Block(name, false),
+			m_ingate_id(register_input_gate("in_Factory")),
+			m_outgate_id(register_output_gate("out_Factory"))
+			{
+			  pkt_count = 0;
+
+			  /*## LOAD SHARED LIBRARY ##*/
+			  
+			  LibHandle = dlopen("./FeatureLib.so", RTLD_LAZY);
+      
+			  if (LibHandle == NULL)
+			  {
+			    throw std::runtime_error(dlerror());
+			  }
+			  
+			  /* Loading event table */
+                
+			  EventTable = (state_tuple**) dlsym(LibHandle, "Events");
+
+			  if (EventTable == NULL)
+			  {
+			    throw std::runtime_error(dlerror());
+			  }
+			}
+
+			PacketPlus_Factory(const PacketPlus_Factory &) = delete;				
+			PacketPlus_Factory& operator=(const PacketPlus_Factory &) = delete;			
+			PacketPlus_Factory(PacketPlus_Factory &&)=delete;					
+			PacketPlus_Factory& operator=(PacketPlus_Factory &&) = delete;				
+
+			/*
+			 * distruttore
+			 */
+			virtual ~PacketPlus_Factory()
+			{}
+
+			/*
+			 * questo blocco ha parametri di configurazione
+			 */
+			virtual void _configure(const xml_node&  n )
+			{
+
+			  /*## PARSE FIELDS ## */
+
+			  for (xml_node f = n.child("field"); f; f = f.next_sibling("field") )
+			  {
+			    std::string name = f.attribute("name").value();
+
+			    int id = f.attribute("id").as_int();
+
+			    if (id == -1) continue;
+
+			    TokenMap[name] = id;
+
+			    if (id > LastTokenId)
+			      LastTokenId = id;
+			  }
+
+			  assert(LastTokenId > 0);
+
+			  BuiltinTokens = LastTokenId + 1;
+
+
+			  /* DEPRECATED!!! ## PARSE ADDITIONAL TABLES ##
+			  
+              
+			  for (xml_node t = n.child("table"); t; t = t.next_sibling("table") )
+			  {
+			    int nhash = 8;
+			    int shash = 20;
+
+			    auto id_attr = t.attribute("id");
+			    auto nh_attr = t.attribute("nhash");
+			    auto sh_attr = t.attribute("shash");
+
+			    std::string id_token = id_attr.value();
+			    std::string nh_token = nh_attr.value();
+			    std::string sh_token = sh_attr.value();
+
+			    if ( id_token == "" )
+			      throw std::runtime_error("Botstream config: error parsing table, ID not found");
+
+			    int id = id_attr.as_int();
+
+			    if ( nh_token != "" )
+			      nhash = nh_attr.as_int();
+
+			    if ( sh_token != "" )
+			      shash = sh_attr.as_int();
+
+			    // Create table
+			    tables[id] = new DLeft<std::string>(nhash, shash);
+
+			    // check if there are entries to add
+
+			    for (xml_node e = t.child("entry"); e; e = e.next_sibling("entry") )
+			    {
+			      std::string key = e.attribute("key").value();
+
+			      std::string value = e.attribute("value").value();
+
+			      // std::cout << "WARNING: table pre-inserts are DISABLED!!!\n";
+			      // int value = e.attribute("value").as_int();
+
+			      std::cout << "K => " << key << "\n";
+			      std::cout << "V => " << value << "\n";
+
+                  auto hkey = HashedReadBuffer( key );
+			      
+			      tables[id]->add( hkey, value);
+			    }
+			  }
+              */
+			  /* assert( TokenMap.size() == NUM_OF_PP_FIELDS ) */
+
+			  /*## PARSE ADDITIONAL KEYS ##*/
+
+			  for (xml_node k = n.child("additional_key"); k; k = k.next_sibling("additional_key") )
+			  {
+			    std::string key_name = k.attribute("name").value();
+
+			    if (key_name != "")
+			    {
+			      int key_index = TokenMap[key_name];
+
+			      std::cout << "Additional key " << key_name << " at index " << key_index << "\n";
+
+			      tokenize(key_name, FlowkeyRules[LastTokenId-key_index]);
+
+			      std::cout << "[FACTORY] Added flowkey rule at index => " << LastTokenId-key_index << "\n"; 
+
+			      BuiltinTokens--;
+			    }
+			  }
+
+
+			  /*## PARSE EVENTS ##*/
+
+			  for (xml_node ev = n.child("event"); ev; ev = ev.next_sibling("event") )
+			  {
+			
+			    std::string type = ev.attribute("type").value();
+
+			    if (type == "timeout") continue;
+
+			    auto req_map = new std::list<req_tuple>();
+
+			    /* This code will extract requirements from
+			       xml and put into 
+			       a list of tuple <placeid, requested_value>
+			       
+			       To add a token you can simply put a new
+			       entry into TokenMap, and this code do the rest
+			    */
+				  
+			    for (auto& x : TokenMap)
+			    {
+			      auto current_attr = ev.attribute(x.first.c_str());
+			      
+			      std::string current_attr_s = current_attr.value();
+			      
+			      if (current_attr_s != "")
+			      {
+                    req_map->push_back( { x.second, current_attr.as_int() } );
+			      }
+			    }
+
+			    std::string field = ev.attribute("value").value();
+
+			    uint16_t key_table = -1;
+
+			    auto table_node = ev.attribute("key_table");
+			    std::string table = table_node.value();
+
+			    if (table != "")
+			    {
+			      key_table = table_node.as_int();
+			    }
+
+			    uint16_t key_field = TokenMap[ field ];
+
+			    int event_id = ev.attribute("id").as_int();
+
+			    event_list.push_back( { event_id, req_map, { key_table, key_field } } );
+			  }
+
+			  set_periodic_timer(std::chrono::seconds(1), "timeout_watcher", 0);
+			}
+
+
+	                virtual void _handle_timer(std::shared_ptr<Timer>&& t)
+	                {
+			  timespec ts;
+
+			  clock_gettime(CLOCK_REALTIME, &ts);
+
+			  // std::cout << "Timeout fired!\n";
+
+			  const timeout_event* tmsg;
+
+			  while ( (tmsg = tmanager.Pop( ts.tv_sec )) != NULL )
+			  {			    
+			    // printf("TYPE %d - TIMESTAMP %llu\n", tmsg->Type, tmsg->ExpireTime);
+
+			    // auto p = static_pointer_cast<const MonstreamMessage, const Msg>(tmsg->Context);
+
+			    auto Tags = (struct pptags*) tmsg->Context;
+
+                memset(Tags->MetricOps, 0, 16*sizeof(metric_op*));
+
+			    Tags->TEvent = (timeout_event*) tmsg;
+
+			    // printf("calling receive message with Message => %p\n", Tags->Message.get());
+			    
+			    // std::cout << "MESSAGE USAGE COUNT => " << Tags->Message.use_count() << "\n";
+
+			    _receive_msg( std::move(Tags->Message), -1 );
+
+			    // tmanager.Free(tmsg);
+			  }
+			}
+
+			
+			/*
+			 * il metodo principale
+			 * riceve un messaggio Packet e stampa delle informazioni sul pacchetto
+			 * se il messaggio appartiene ad un altro tipo viene catturata una eccezione.
+			 */
+            virtual void _receive_msg(std::shared_ptr<const Msg>&& m, int /*index*/)
+		    {
+                /*
+				    if ( m->type() == MSG_ID(PacketPlus) ) { }
+				    
+				 */
+
+                pkt_count++;
+
+                auto pktp = static_cast<const MonstreamMessage*>(m.get());
+
+                pptags* Tags = pktp->getTags();
+
+                Tags->TManager = &(tmanager);
+                Tags->Message = m;
+                // Tags->Tables = tables;
+
+                timeout_event* tev = Tags->TEvent;
+
+                int EventID  = -1;
+
+                // EVENT DECISION
+
+                auto state_flowkey = Tags->StateFlowkey;
+
+                if (tev != NULL)
+                {
+                    std::cout << "Timeout event\n";
+
+                 // TODO:
+                 //
+                 // Put in tags timeout_event structure
+                 // in order to do something like:
+                 // 
+                    EventID = tev->Type;
+                 // 
+                 //
+
+                    if (tev->PrimaryFlowkey)
+                        Tags->StateFlowkey = state_flowkey = tev->PrimaryFlowkey;
+
+                                    }
+                else
+                {					
+                    int KeyID = -1;
+
+                    const event::key_pair* Key = NULL;
+
+                    /* Extract EventID */
+                    /* Extract primary key */
+
+                    for (auto& ev : event_list)
+                    {
+                        bool matching = true;
+
+                        for(auto& x : *ev.Requirements)
+                        {
+                            if(x.Value != pktp->getValue(x.Id))
+                            {
+                                matching = false;
+                                break;
+                            }
+                        }
+
+                        if (matching == true)
+                        {
+                            /* Event found */
+
+                            EventID = ev.Id;
+                            Key = &(ev.Key);
+                            // KeyID = ev.Key.FlowkeyId;
+
+                            break;
+                        }
+                    }
+
+
+                    if ( EventID == -1 )
+                    {
+                        /* drop packet */
+			            Tags->Message = NULL;
+                        pktp->~MonstreamMessage();
+
+                        // std::cout << "dropping due to NOT MATCHED EVENT ID\n";
+                        return;
+                    }
+
+                    KeyID = Key->FlowkeyId;
+
+                    /* NOTE: WE NEED TO CALCULATE THE PRIMARY KEY
+                     *       IF IS NOT FORMED BY AN UNIQUE FIELD
+                     */
+
+                    calculate_flowkey(pktp, KeyID);
+
+                    /* ACTUALLY DISABLED!!!
+
+                    if (Key->TableId >= 0)
+                    {
+                        // std::cout << "Source of primary key is not packet map\n";
+
+                        // QUERY AND COPY FROM TABLE
+			      
+                        // 1) GET SOURCE FLOWKEY
+			      
+                        auto SourceKey = pktp->getFlowkey(KeyID);
+				
+                        // 2) QUERY THE TABLE WITH TABLEID WITH (1)
+
+                        auto table = tables[Key->TableId];
+
+                        if (table == NULL)
+                            throw std::runtime_error("Table index not valid");
+			      
+                        auto table_entry = table->get(*SourceKey);
+
+                        if (table_entry == NULL)
+                        {
+                            std::cout << "dropping due to TABLE ENTRY NOT FOUND\n";
+                            pktp->~MonstreamMessage();
+                            return; // drop packet
+                        }
+
+                        // 3) COPY THE CONTENT OF THE TABLE INTO A MAP REGISTER!
+
+                        // (a) found free entry register
+                        // (b) use it
+
+                        int register_index = LastTokenId + 1;
+
+                        // std::cout << "First free register index => " << register_index << "\n";
+
+                        Tags->Map[register_index] << *table_entry;
+
+                        KeyID = register_index;
+                    }
+                    */
+
+                    Tags->StateFlowkey = state_flowkey = pktp->getFlowkey(KeyID);
+                }
+
+
+                /* Extract States */
+                /* Extract MetricOps */
+					
+			  state_tuple* StateTable = EventTable[ EventID ];
+
+			  int StateID = 0;
+			  auto state_node = states_map.get(*state_flowkey);
+
+                               /*
+                               state_flowkey->GetRawData(),
+							   state_flowkey->GetLength(),
+							   state_flowkey->GetHash());
+                               */
+
+			  if (state_node != NULL)
+			  {
+			    StateID = state_node->Id;
+			  }
+
+			  Tags->StateInfo = state_node;
+					
+			  /* get state_tuple */
+
+			  Tags->State = &StateTable[ StateID ];
+
+
+			  if ( StateID > 0 and
+			       state_node->Expire > 0 and
+			       pktp->timestamp_us() > state_node->Expire )
+			  {
+			    // take another state
+
+			    state_node->Id = StateID = Tags->State->TimeoutState;
+
+			    if (StateID == 0)
+			    {
+			      // remove entry from dleft
+
+			      states_map.remove(*state_flowkey);
+
+                                    /*
+                                    state_flowkey->GetRawData(),
+                                    state_flowkey->GetLength(),
+                                    state_flowkey->GetHash());
+                                    */
+
+			      Tags->StateInfo = NULL;
+			    }
+
+
+			    Tags->State = &StateTable[ StateID ];
+			  }
+
+
+			  metric_op* MetricOps = Tags->State->MetricSet;
+
+			  if (MetricOps == NULL)
+			    {
+			      pktp->~MonstreamMessage();
+			      // pktp->~PacketPlus();
+
+			      // std::cout << "dropping due to NULL METRIC OPS\n";
+			      return; /* drop packet */
+			    }
+
+
+			  // HARCODED -> FIX THIS
+
+			  /*
+			  auto pp = static_cast<const PacketPlus*>(pktp);
+
+			  if (pp->is_udp() and 
+			      pp->src_port() == 53 and 
+			      pp->get_DNSflag() == 0 and
+			      tables[0] != NULL)
+			  {
+			    std::vector<uint32_t> addresses;
+
+			    pp->get_answersIP(addresses);
+
+			    for (auto &x : addresses)
+			    {
+			      tables[0]->add( ReadBuffer(x), pp->get_domain_query() );
+			    }
+			  }
+			  */
+
+
+			  // std::cout << "Passed HARDCODED part of factory (dns response ip -> table)\n";
+			  
+			  
+
+			  /* fill metric operation array */
+
+			  /* for each Op in StateInfo.MetricOps */
+			  while ( MetricOps->MetricID != -1 )
+			  {
+			    calculate_flowkey( pktp, MetricOps->VDFlowkeyGet );
+			    calculate_flowkey( pktp, MetricOps->VDFlowkeySet );
+
+			    calculate_flowkey( pktp, MetricOps->VMFlowkeySet );
+			    calculate_flowkey( pktp, MetricOps->VMFlowkeyGet );
+					  
+			    Tags->MetricOps[ MetricOps->MetricID ] = MetricOps;
+
+			    MetricOps++;
+			  }
+
+
+			  /* Calculate needed flowkeys */
+			  /*
+			    for (int i=NUM_OF_PP_FIELDS; i < FlowkeysNumber; i++)
+			    {
+			    StaticFlowkey* CurrentFlowkey = pktp->getFlowkey(i);
+
+			    assert(CurrentFlowkey->GetLength() == 0);
+
+			    std::vector<int> Rule = FlowkeyRules[NUM_OF_PP_FIELDS-i];
+
+			    for (auto &field : Rule)
+			    {
+			    *CurrentFlowkey << pktp->getValue(field);
+			    }
+			    }
+
+			    pktp->setMetricFlowkey( MetricID );
+			  */
+					
+			  send_out_through(std::move(m), m_outgate_id);
+			}
+
+		private:
+
+	                /*
+			 *parser per riempire di flowkey il vettore variation/monitor detector
+			 */
+			void tokenize(std::string& w, std::vector<int>& v){
+
+				int point = 0;
+				int size  = 0;
+				for(unsigned int i = 0; i < w.length(); i++){
+						
+					size++;
+					if(w.substr(i,1) == "-"){
+						
+						//std::cout<<w.substr(point,size-1)<<"\n";
+						v.push_back(TokenMap[w.substr(point,size-1)]);
+						point = i+1;
+						size  = 0;
+					}
+				}
+				v.push_back(TokenMap[w.substr(point,size)]);
+				//std::cout<<w.substr(point,size)<<"\n";
+			}
+
+	  inline void calculate_flowkey( const MonstreamMessage* pktp, int flowkey_id )
+	  {
+
+	    if ( flowkey_id < BuiltinTokens ) return;
+
+	    auto CurrentFlowkey = pktp->getFlowkey(flowkey_id);
+
+	    if (CurrentFlowkey->GetLength() == 0)
+	    {
+	      /* note that this is true only for combo-flowkeys 
+	       * as normal flowkeys doesn't have composition rules
+	       */
+
+	      std::vector<int>& Rule = FlowkeyRules[LastTokenId-flowkey_id]; // NUM_OF_PP_FIELDS];
+
+	      for (auto field : Rule)
+	      {
+		    Buffer<128>* b = pktp->getFlowkey(field);
+
+            try
+            {
+                // std::cout << "before insert\n";
+		        *CurrentFlowkey << *b;
+            }
+            catch (std::out_of_range& ex)
+            {
+                std::cout << "error inserting\n";
+            }
+	      }
+	    }
+	  }
+			
+			int m_ingate_id;
+			int m_outgate_id;
+			int pkt_count;
+
+	  std::list<struct event> event_list;
+
+	  void* LibHandle;
+
+	  state_tuple** EventTable; /* indexed by event_id */
+
+	  // MemoryPool<PacketPlus> PacketCache;
+
+	                
+
+	};
+
+	REGISTER_BLOCK(PacketPlus_Factory,"PacketPlus_Factory");
+}

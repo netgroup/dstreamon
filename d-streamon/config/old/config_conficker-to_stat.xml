@@ -1,0 +1,265 @@
+<botstream>
+
+	<!-- source type="trace" name="/mnt/.legacy/tracce/pp1_small.pcap" /-->
+	<source type="live" name="lo"/>
+
+    <statedef id="normal" />
+    <statedef id="alert"/>
+    <statedef id="infected" timeout="60" next_state="alert"/>
+
+	<metrics>
+		<metric name="dns_qry">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="3600" />
+		</metric>
+		<metric name="dns_nxd">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="3600" />
+		</metric>
+		<metric name="tcp_syn_445">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="3600" />
+		</metric>
+		<metric name="tcp_synack_445">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="3600" />
+		</metric>
+<!--
+		<metric name="tcp_syn_139">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="60" />
+		</metric>
+		<metric name="tcp_synack_139">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="tewma" window="60" />
+		</metric>
+-->
+
+		<metric name="pps_normal">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_alert">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+		<metric name="pps_infected">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="simple"/>
+		</metric>
+
+	</metrics>
+
+	<features>
+		<feature name="NXDRatio" body="dns_nxd/dns_qry"/>
+		<feature name="DNSQry" body="dns_qry"/>
+		<feature name="DNSNxd" body="dns_nxd"/>
+		<feature name="SYNACK445Ratio" body="tcp_synack_445/tcp_syn_445"/>
+		<!--feature name="SYNACK139Ratio" body="tcp_synack_139/tcp_syn_139"/-->
+
+		<feature name="pps_normal_f" body="pps_normal"/>
+		<feature name="pps_alert_f" body="pps_alert"/>
+		<feature name="pps_infected_f" body="pps_infected"/>
+		<feature name="pps_tot_f" body="pps_normal + pps_alert + pps_infected"/>
+	</features>
+
+	<event type="timeout" class="stats">
+		<state id="normal">
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_infected" vm_get="ip_src"/>
+		
+			<condition expression="true" action="print(%pps_tot_f \t %pps_normal_f \t %pps_alert_f \t %pps_infected_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_alert.reset(),pps_infected.reset()"/>	
+		</state>	
+		<state id="alert">
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_infected" vm_get="ip_src"/>
+		
+			<condition expression="true" action="print(%pps_tot_f \t %pps_normal_f \t %pps_alert_f \t %pps_infected_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_alert.reset(),pps_infected.reset()"/>	
+		</state>
+		<state id="infected">
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<use-metric id="pps_alert" vm_get="ip_src"/>
+			<use-metric id="pps_infected" vm_get="ip_src"/>
+		
+			<condition expression="true" action="print(%pps_tot_f \t %pps_normal_f \t %pps_alert_f \t %pps_infected_f)" next_state=""/>
+
+			<post-condition-action do="pps_normal.reset(),pps_alert.reset(),pps_infected.reset()"/>	
+		</state>
+	</event>
+
+	<event type="timeout" class="conficker">
+		<state id="normal">
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+
+		<state id="alert">
+            <use-metric id="dns_qry" vm_get="ip_dst"/>
+            <use-metric id="dns_nxd" vm_get="ip_dst"/>
+			<use-metric id="tcp_syn_445" vm_get="ip_dst"/>
+			<use-metric id="tcp_synack_445" vm_get="ip_dst"/>
+			<condition expression="SYNACK445Ratio &lt; 0.5" action="print(%ip_dst change state to infected)" next_state="infected"/>
+			<post-condition-action do=""/>
+		</state>
+		<state id="infected">
+            <use-metric id="dns_nxd" vm_get="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+	<!--event type="packet" selector="packet_no 4" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="pps_normal" vm_get="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+
+			<post-condition-action do="print(setting stats timeout)">
+				<timeout_set class="stats" key="ip_src" value="1"/>
+			</post-condition-action>
+		</state>
+	</event-->
+
+	<event type="packet" selector="proto udp and dst_port 53" primary-key="ip_src">
+		<state id="normal">
+			<use-metric id="dns_qry" vm_update="ip_src"/>
+			<use-metric id="dns_nxd" vm_get="ip_src"/>
+
+			<use-metric id="pps_normal" vm_update="ip_src"/>
+
+			<post-condition-action do=""/>
+		</state>
+
+		<state id="alert">
+			<use-metric id="dns_qry" vm_update="ip_src"/>
+
+			<use-metric id="pps_alert" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+
+		<state id="infected">
+			<use-metric id="dns_qry" vm_update="ip_src"/>
+
+			<use-metric id="pps_infected" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto udp and src_port 53 and flags dns-nxdomain" primary-key="ip_dst">
+		<state id="normal">
+			<use-metric id="dns_qry" vm_get="ip_dst"/>
+			<use-metric id="dns_nxd" vm_update="ip_dst"/>	
+
+			<use-metric id="pps_normal" vm_update="ip_src"/>
+
+			<condition expression="NXDRatio&gt;0.2" action="print(%ip_dst change state to alert)" next_state="alert">
+				<timeout_set class="conficker" key="ip_dst" value="3"/>
+			</condition>
+			<post-condition-action do=""/>
+		</state>
+		
+		<state id="alert">
+			<use-metric id="dns_nxd" vm_update="ip_dst"/>
+
+			<use-metric id="pps_alert" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+
+		<state id="infected">
+			<use-metric id="dns_nxd" vm_update="ip_dst"/>
+
+			<use-metric id="pps_infected" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and dst_port 445 and flags tcp-syn" primary-key="ip_src">
+		<state id="alert">
+			<use-metric id="tcp_syn_445" vm_update="ip_src"/>
+
+			<use-metric id="pps_alert" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+		<state id="infected">
+			<use-metric id="tcp_syn_445" vm_update="ip_src"/>
+
+			<use-metric id="pps_infected" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and src_port 445 and flags tcp-syn|tcp-ack" primary-key="ip_dst">
+		<state id="alert">
+			<use-metric id="tcp_synack_445" vm_update="ip_dst"/>
+
+			<use-metric id="pps_alert" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+		<state id="infected">
+			<use-metric id="tcp_synack_445" vm_update="ip_dst"/>
+
+			<use-metric id="pps_infected" vm_update="ip_src"/>
+
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+<!--
+	<event type="packet" proto="tcp" src_port="" dst_port="139" flags="tcp-syn" primary-key="ip_src">
+		<state id="alert">
+			<use-metric id="tcp_syn_445" vm_get="ip_src"/>
+			<use-metric id="tcp_synack_445" vm_get="ip_src"/>
+
+			<use-metric id="dns_qry" vm_get="ip_src"/>
+			<use-metric id="dns_nxd" vm_get="ip_src"/>
+
+			<use-metric id="tcp_syn_139" vm_update="ip_src"/>
+			<use-metric id="tcp_synack_139" vm_get="ip_src"/>
+
+			<condition expression="SYNACK139Ratio &lt; 0.3" action="" next_state=""/>
+
+			<post-condition-action do=""/>
+		</state>
+	</event>
+
+
+	<event type="packet" proto="tcp" src_port="139" dst_port="" flags="tcp-syn tcp-ack" primary-key="ip_dst">
+		<state id="alert">
+			<use-metric id="tcp_syn_445" vm_get="ip_dst"/>
+			<use-metric id="tcp_synack_445" vm_get="ip_dst"/>
+
+			<use-metric id="dns_qry" vm_get="ip_dst"/>
+			<use-metric id="dns_nxd" vm_get="ip_dst"/>
+
+			<use-metric id="tcp_syn_139" vm_get="ip_dst"/>
+			<use-metric id="tcp_synack_139" vm_update="ip_dst"/>
+
+			<condition expression="SYNACK139Ratio &lt; 0.3" action="" next_state=""/>
+
+			<post-condition-action do=""/>
+		</state>
+	</event>
+-->
+</botstream>

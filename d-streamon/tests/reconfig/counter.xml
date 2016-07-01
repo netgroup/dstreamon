@@ -1,0 +1,19 @@
+<composition id="dummy" app_id="boh">
+	<install>
+
+		<block id="counter" type="counter" > 
+                        <params>
+                                
+			</params>
+		</block>
+
+
+                 <ext_gate direction="in" block="counter" gate="in_pkt" ext_name="counter_input"/>
+                <ext_connection src_composition="arch_input" src_gate="captured_pkts" dst_composition="dummy" dst_gate="counter_input"/>
+
+	</install>
+
+</composition>
+
+
+				

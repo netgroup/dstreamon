@@ -1,0 +1,110 @@
+@CHARSET "UTF-8";
+
+body {
+	font: 62.5% "Trebuchet MS", sans-serif;
+	margin: 50px;
+}
+
+/*.ui-progressbar-value {
+	background-image: url(/demons/css/ui-lightness/images/pbar-ani.gif);
+}*/
+
+#toolbar-compositions-file, #toolbar-compositions-test {
+	padding: 10px 4px;
+}
+
+.table-invisible {
+	border: 3px;
+	border-color: red;
+}
+
+.workspace {
+	margin-top: 10px;
+	height: 720px;
+}
+
+.workspace-top {
+	border: 1px solid #AAA;
+	position: relative;
+	width: 100%;
+	height: 120px;
+}
+
+.workspace-vcenter {
+	position: relative;
+	top: 10px;
+	width: 100%;
+	height: 450px;
+}
+
+.workspace-bottom {
+	border: 1px solid #AAA;
+	position: relative;
+	bottom: -20px;
+	width: 100%;
+	height: 120px;
+}
+
+.workspace-left {
+	border: 1px solid #AAA;
+	position: absolute;
+	left: -1px;
+	width: 120px;
+	height: 450px;
+}
+
+.workspace-draggable {
+	position: absolute;
+	left: 130px;
+	right: 0px;
+	height: 450px;
+}
+
+.workspace-hcenter {
+	border: 1px solid #AAA;
+	position: absolute;
+	left: 0px;
+	right: 160px;
+	height: 450px;
+}
+
+.workspace-right {
+	border: 1px solid #AAA;
+	position: absolute;
+	right: -1px;
+	width: 150px;
+	height: 450px;
+}
+
+.draggable {
+	cursor: pointer;
+}
+
+.block {
+	border-radius: 20px;
+	width: 100px;
+	height: 30px;
+	padding-top: 10px;
+	text-align: center;
+	z-index:80;
+}
+
+.start {
+	border-radius: 20px;
+	width: 60px;
+	height: 40px;
+	text-align: center;
+	z-index:30;
+}
+
+._jsPlumb_endpoint {
+	z-index:100;
+}
+
+._jsPlumb_overlay {
+	z-index:40;
+}
+
+._jsPlumb_connector {
+	z-index:60;
+}

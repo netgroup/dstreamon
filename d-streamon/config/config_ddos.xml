@@ -1,0 +1,74 @@
+<botstream>
+	<!--source type="trace" name="/home/markin/Downloads/anon-Booter5.pcap"-->
+	<source type="live" name="eno16777736"/>
+	<publisher protocol="tcp" ip="*" port="5560" />
+
+	<statedef id="normal" />
+	<statedef id="monitored"/>
+	<statedef id="alert"/>
+	<statedef id="quarantine"/>
+
+	<metrics>
+		<metric name="pkt_rate">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60"/>
+		</metric>
+	</metrics>
+
+	<table name="tset" type="DLeft" key_type="" value_type="int" nhash="8" shash="20"/>
+	<table name="oldvalue" type="DLeft" key_type="" value_type="double" nhash="8" shash="20"/>
+
+	<features>
+		<feature name="pkt_rate_f" body="pkt_rate"/>
+	</features>
+
+	<event type="timeout" class="ddos_burst">
+		<state id="monitored" level="INFO" code="B0" description="DDoS Monitoring Timeout">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="" next_state="alert"/>
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="normal">
+				<timeout_set class="ddos_burst" key="ip_dst" value="0"/>
+			</condition>
+			<post-condition-action do="Publish(feature, pkt_rate_f=%pkt_rate_f);oldvalue(ip_dst)=pkt_rate_f;Publish(log, monitored timeout expired for %ip_dst)"/>
+		</state>
+		<state id="alert" level="LOW" code="B1" description="DDoS Suspected Timeout">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="Publish(log, putting %ip_dst in quarantine for 30 secs)" next_state="quarantine">
+				<timeout_set class="ddos_burst" key="ip_dst" value="30"/>
+			</condition>
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="monitored"/>
+			<post-condition-action do="Publish(feature, pkt_rate_f=%pkt_rate_f);oldvalue(ip_dst)=pkt_rate_f;Publish(log, alert timeout expired for %ip_dst)"/>
+		</state>
+		<state id="quarantine" level="HIGH" code="B2" description="DDoS Quarantine Timeout">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="true" action="" next_state="monitored"/>
+			<post-condition-action do="Publish(log, %ip_dst no longer in quarantine)">
+				<timeout_set class="ddos_burst" key="ip_dst" value="10"/>
+			</post-condition-action>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp" primary-key="ip_dst">
+		<state id="normal" level="INFO" code="C0" description="DDoS Monitoring">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 1.2 and !tset(ip_dst)" action="Publish(log, new flow inserted: %ip_src->%ip_dst);tset(ip_dst)=0" next_state="monitored"/>
+			<condition expression="pkt_rate_f &gt; 1.2 and tset(ip_dst) == 1" action="tset(ip_dst)=0;Publish(log, flow already analyzed: ip_src->ip_dst)" next_state="monitored"/>
+		</state>
+		<state id="monitored" level="LOW" code="C1" description="DDoS Suspected">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="tset(ip_dst) == 0" action="tset(ip_dst)=1;Publish(log, setting timeout for %ip_dst)" next_state="">
+				<timeout_set class="ddos_burst" key="ip_dst" value="10"/>
+			</condition>
+		</state>
+		<state id="alert" level="HIGH" code="C2" description="DDoS Detected">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do="Publish(alert, %ip_dst - alert value: %pkt_rate_f)"/>
+		</state>
+		<state id="quarantine" level="HIGH" code="C3" description="DDoS Quarantine">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do="Publish(critical, %ip_dst - quarantine value: %pkt_rate_f)"/>
+		</state>
+	</event>
+</botstream>

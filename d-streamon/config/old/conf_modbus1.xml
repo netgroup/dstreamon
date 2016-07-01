@@ -1,0 +1,24 @@
+<botstream>
+	<source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+	 <statedef id="default" />
+
+        <metrics>
+                <metric name="m1">
+                        <variation_detector status="off"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+        </metrics>
+
+        <features>
+                <feature name="bo" body="m1"/>
+        </features>
+
+        <event type="packet" selector="proto tcp and dst_port 502" primary-key="ip_dst">
+                <state id="default">
+                        <use-metric id="m1" vm_update="ip_dst"/>
+                        <condition expression="true" action="print(%modbus_fc %modbus_ti)" next_state="" />
+                </state>
+        </event>
+
+</botstream>
+

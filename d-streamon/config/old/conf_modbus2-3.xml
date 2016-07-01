@@ -1,0 +1,84 @@
+ <botstream>
+        <source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+
+         <statedef id="default" />
+	 <statedef id="monitored" />
+	 <statedef id="alert" />
+	 <statedef id="prealert" />
+
+
+
+        <metrics>
+                <metric name="m1">
+                        <variation_detector status="on"/>
+                        <variation_monitor status="on" type="dleft" />
+                </metric>
+        </metrics>
+
+        <features>
+                <feature name="fs" body="m1"/>
+        </features>
+
+
+	<event type="timeout" class="standard" primary-key="ip_dst" >
+                <state id="monitored">
+                        <use-metric id="m1" vm_get="ip_src"/>
+                        <condition expression="fs &gt; 4" action="" next_state="alert">
+				<timeout_set class="standard" key="ip_dst" value="10"/>
+			</condition>
+
+                        <condition expression="fs &lt; 5" action="" next_state="default">
+                                <timeout_set class="standard" key="ip_dst" value="0"/>
+                        </condition>
+                </state>
+                <state id="alert">
+                        <use-metric id="m1" vm_get="ip_src"/>
+                        <condition expression="true" action="print(DEVICE SCAN)" next_state="monitored" />
+			 <post-condition-action do= "m1.reset()" />
+                </state>
+                
+        </event>
+
+	<event type="packet" selector="proto tcp and dst_port 502 and modbus_fc 8 or
+				       proto tcp and dst_port 502 and modbus_fc 17 or
+                                       proto tcp and dst_port 502 and modbus_fc 43" primary-key="ip_dst">
+                <state id="default">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+			<condition expression="fs &gt; 10" action="" next_state="prealert"/>
+                        <condition expression="true" action="print(Detected suspicious command: %modbus_fc %modbus_ti)" next_state="monitored" >
+				   <timeout_set key="ip_src" class="standard" value="20" primary-key="" />
+                        </condition>
+
+                </state>
+
+   
+		<state id="prealert">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+                        <condition expression="true" action="print(Suspect number of: %modbus_fc)" next_state="alert">
+                        	<timeout_set key="ip_src" class="standard" value="60" primary-key="" /> 
+                        </condition>
+                </state>
+
+
+		<state id="monitored">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+                        <condition expression="true" action="" next_state=""  >
+			</condition>
+                </state>
+
+
+                <state id="alert">
+                        <use-metric id="m1" vd_update="ip_src-ip_dst" vm_update="ip_src"/>
+                        <condition expression="true" action="print(ALERT:%modbus_fc %modbus_ti)" next_state=""/>
+                </state>
+                 
+
+
+
+        </event>
+
+
+</botstream>
+
+
+

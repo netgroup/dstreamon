@@ -1,0 +1,27 @@
+<composition id="perflowstats" app_id="myapp">
+ <install>
+
+  <block id="source" type="PFQSource" sched_type="active"> 
+   <params>
+    <source type="live" name="eth0"/>
+   </params>
+  </block>
+
+  <block id="stats" type="PerFlowStats">
+   <params>
+     <timeout ms='500'/>
+   </params>
+  </block>
+
+  <block id="exporter" type="IPFIXExporter">
+    <params>
+      <domain id='31'/>
+      <export host='131.114.54.11' port='113' transport='udp'/>
+    </params>
+  </block>
+
+  <connection src_block="source" src_gate="source_out" dst_block="stats" dst_gate="in_pkt"/>
+  <connection src_block="stats" src_gate="out_flow" dst_block="exporter" dst_gate="in_msg"/>
+
+ </install>
+</composition>

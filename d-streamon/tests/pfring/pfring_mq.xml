@@ -1,0 +1,51 @@
+<composition id="arch_input" app_id="boh">
+	<install>
+		<threadpool id="sniffer_thread_0" num_threads="1">
+			<core number="0"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_1" num_threads="1">
+			<core number="1"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_2" num_threads="1" >
+			<core number="2"/>
+		</threadpool>
+		<threadpool id="sniffer_thread_3" num_threads="1" >
+			<core number="3"/>
+		</threadpool>
+
+		<block id="sniffer0" type="MQPfring" sched_type="active" threadpool="sniffer_thread_0"> 
+			<params>
+                                <queues device="eth2">
+                                        <queue number="0"/>
+                                </queues>
+                                                
+			</params>
+		</block>
+		<block id="sniffer1" type="MQPfring" sched_type="active" threadpool="sniffer_thread_1"> 
+			<params>
+                                <queues device="eth2">
+                                        <queue number="1"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer2" type="MQPfring" sched_type="active" threadpool="sniffer_thread_2"> 
+			<params>
+                                <queues device="eth2">
+                                        <queue number="2"/>
+                                </queues>
+			</params>
+		</block>
+		<block id="sniffer3" type="MQPfring" sched_type="active" threadpool="sniffer_thread_3"> 
+			<params>
+                                <queues device="eth2">
+                                        <queue number="3"/>
+                                </queues>
+			</params>
+		</block>
+
+	</install>
+
+</composition>
+
+
+				

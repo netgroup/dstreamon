@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<title>Demons - Compositions editor</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		
+		<link rel="stylesheet" type="text/css" href="css/demons/jquery-ui-1.8.16.custom.css" />	
+		<link rel="stylesheet" type="text/css" href="css/demons.css" />	
+		
+		<script language="javascript" type="text/javascript" src="js/jquery-1.6.2.js"></script>
+		<script language="javascript" type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+		<script language="javascript" type="text/javascript" src="js/jquery.jsPlumb-1.3.2-all-min.js"></script>
+		<script language="javascript" type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+		<script language="javascript" type="text/javascript" src="js/demons.compositions.js"></script>
+	</head>
+	<body onunload="jsPlumb.unload();">
+		<div class="compositions">
+            <div id="dialog-progress-bar">
+				<p>
+					<span class="ui-icon ui-icon-info" style="float:left; margin:0 7px 50px 0;"></span>
+					<span id="dialog-progress-bar-description"></span>
+				</p>
+				<div id="progress-bar"></div>
+			</div>
+
+            <div id="dialog-msgbox">
+				<p>
+					<span class="ui-icon ui-icon-circle-check" style="float:left; margin:0 7px 50px 0;"></span>
+					<span id="dialog-msgbox-description"></span>
+				</p>
+			</div>
+			
+            <div id="dialog-msgbox-yesno">
+				<p>
+					<span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 50px 0;"></span>
+					<span id="dialog-msgbox-yesno-description"></span>
+				</p>
+			</div>
+			
+		    <div id="dialog-new-composition">
+		    	<table class="table-invisible">
+		    		<tr>
+		    			<td>
+							<label for="dialog-new-composition-id">Id: </label>
+						</td>
+						<td>
+							<input type="text" name="dialog-new-composition-id" id="dialog-new-composition-id" value="" class="ui-widget-content ui-corner-all" />
+						</td>
+		    		</tr>
+		    		<tr>
+						<td>
+							<label for="dialog-new-composition-name">Name: </label>
+						</td>
+						<td>
+							<input type="text" name="dialog-new-composition-name" id="dialog-new-composition-name" value="" class="ui-widget-content ui-corner-all" />
+						</td>
+					</tr>
+				</table>
+            </div>
+            
+		    <div id="dialog-open-composition">
+		    	<label for="composition-select">Saved compositions: </label>
+		    	<select id="composition-select" class="ui-widget-content ui-corner-all" ></select>
+            </div>
+            
+		    <div id="dialog-open-config">
+		    	<table id="config-fields" class="table-invisible">
+				</table>
+            </div>
+
+		    <div id="dialog-test">
+		    	<div id="test-map"></div>
+		    	<table>
+		    		<tr>
+		    			<td width="20" height="20" style="background-color: red;"></td>
+		    			<td>P: Popularity</td>
+		    		</tr>
+		    	</table>
+            </div>
+
+			<table style="display: none">
+	    		<tr id="config-field-textbox-template">
+	    			<td>
+						<label id="config-field-textbox-name" for="config-field-textbox-value"></label>
+					</td>
+					<td>
+						<input type="text" id="config-field-textbox-value" value="" class="ui-widget-content ui-corner-all" />
+					</td>
+	    		</tr>
+	    		<tr id="config-field-checkbox-template">
+	    			<td>
+						<label id="config-field-checkbox-name" for="config-field-checkbox-value"></label>
+					</td>
+					<td>
+						<input type="checkbox" id="config-field-checkbox-value" />
+					</td>
+	    		</tr>
+	    		<tr id="config-field-enumeration-template">
+					<td>
+						<label id="config-field-enumeration-name" for="config-field-enumeration"></label>
+					</td>
+					<td>
+						<div id="config-field-enumeration-value">
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td id="config-field-enumeration-value-template">
+						<input type="radio" id="config-field-enumeration-value-id" name="radio" /><label id="config-field-enumeration-value-name" for="config-field-enumeration-value-id"></label>
+					</td>
+				</tr>
+				<tr id="config-field-array-template">
+					<td>
+						<label id="config-field-array-name" for="config-field-array"></label>
+					</td>
+					<td>
+						<select id="config-field-array-value">
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td id="config-field-array-value-template">
+						<option id="config-field-array-value-id" value=""></option>
+					</td>
+				</tr>
+	    		<tr id="config-field-functionsrow-template">
+	    		</tr>
+	    		<tr>
+					<td id="config-field-function-template">
+						<button id="config-field-function-value"></button>
+					</td>
+	    		</tr>
+			</table>
+            
+			<span id="toolbar-compositions-file" class="ui-widget-header ui-corner-all">
+				<button id="button-new-composition"></button>
+				<button id="button-open-composition"></button>
+				<button id="button-save-composition"></button>
+			</span>
+
+			<span id="toolbar-compositions-test" class="ui-widget-header ui-corner-all">
+				<button id="button-test-map"></button>
+			</span>
+
+			<div id="workspace-template" style="display: none">
+				<div class="workspace">
+			        <div class="workspace-top ui-corner-all"></div>
+			        <div class="workspace-vcenter">
+				        <div class="workspace-left ui-corner-all"></div>
+				        <div id="drag-container" class="workspace-draggable">
+					        <div id="workspace" class="workspace-hcenter ui-corner-all">
+					        	<div id="start" class="start draggable ui-widget-content" style="position: inherit; z-index: 1; left: 34px; top: 186px; ">
+									<p>Start</p>
+								</div>
+					        </div>
+					        <div id="blocks-available" class="workspace-right ui-corner-all">
+					        	<div id="blocks-accordion" style="z-index: 1">
+					        		<h3><a href="#">Data capture</a></h3>
+					        		<div>
+							        	<div id="block-A" class="block draggable ui-widget-content" type="blockA">
+											<span>Block A</span>
+										</div>
+									</div>
+					        		<h3><a href="#">Data filtering</a></h3>
+					        		<div>
+							        	<div id="block-B" class="block draggable ui-widget-content" type="blockB">
+											<span>Block B</span>
+										</div>
+							        	<div id="block-C" class="block draggable ui-widget-content" type="blockC">
+											<span>Block C</span>
+										</div>
+									</div>
+								</div>
+					        </div>
+						</div>
+			        </div>
+			        <div class="workspace-bottom ui-corner-all"></div>
+				</div>
+			</div>
+
+			<div id="block-template" style="display: none">
+	        	<div id="block" class="block draggable ui-widget-content">
+					<span id="block-name"></span>
+				</div>
+			</div>
+			
+			<div id="tabs">
+				<ul>
+<!--					<li><a href="#tabs-1">New Component</a></li>-->
+				</ul>
+<!--				<div id="tabs-1">-->
+<!--				</div>-->
+			</div>
+		</div>
+	</body>
+</html>

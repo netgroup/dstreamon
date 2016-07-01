@@ -1,0 +1,78 @@
+<botstream>
+	<source type="live" name="eth0"/>
+
+    	<statedef id="default" />
+    	<statedef id="suspicious" />
+    	<statedef id="infected" />
+
+	<metrics>
+		<metric name="m1">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+		<metric name="m2">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+		<metric name="m3">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+		<metric name="m4">
+			<variation_detector status="off"/>
+			<variation_monitor status="on" type="dleft" />
+		</metric>
+
+	</metrics>
+
+	<features>
+		<feature name="dns_ratio" body="m1/m2"/>
+		<feature name="tcp_ratio" body="m3/m4"/>
+		<feature name="tcp_syn445" body="m4"/>
+		<feature name="dns_query" body="m2"/>
+
+	</features>
+
+
+	<event type="packet" selector="proto udp and src_port 53 and flags dns-nxdomain" primary-key="ip_dst">
+		<state id="default">
+			<use-metric id="m1" vm_update="ip_dst" />
+            <condition expression="false" action="" next_state="" />
+		</state>
+	</event>
+
+	<event type="packet" selector="proto udp and dst_port 53" primary-key="ip_src">
+		<state id="default">
+			<use-metric id="m1" vm_get="ip_src"/>
+			<use-metric id="m2" vm_update="ip_src"/>
+            <condition expression="dns_query > 10 and dns_ratio > 0.50" action="print(\n\n !!! suspicious host: %ip_src !!! \n\n)" next_state="suspicious" />
+            <condition expression="false" action="print(%ip_src ratio: %dns_ratio tot: %dns_query)" next_state="" />
+		</state>
+	</event>
+	
+	<event type="packet" selector="proto tcp and src_port 445 and flags tcp-syn|tcp-ack" primary-key="ip_dst">
+		<state id="suspicious">
+			<use-metric id="m3" vm_update="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and dst_port 445 and flags tcp-syn" primary-key="ip_src">
+		<state id="suspicious">
+			<use-metric id="m4" vm_update="ip_src"/>
+			<use-metric id="m3" vm_get="ip_src"/>
+			<condition expression="tcp_syn445 > 10 and tcp_ratio &lt; 0.5" action="print(\n\n!!! infected host: %ip_src !!!\n\n)" next_state="infected"/>
+            <condition expression="false" action="print(%ip_src tcp_syn: %tcp_ratio tot: %tcp_syn445)" next_state="" />
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and flags tcp-syn" primary-key="ip_src">
+		<state id="infected">
+			<use-metric id="m3" vm_get="ip_src"/>
+			<condition expression="tcp_ratio &lt; 0.5" action="print(Infected host %ip_src trying to contact %ip_dst)" next_state=""/>
+		</state>
+	</event>
+
+
+
+</botstream>

@@ -1,0 +1,72 @@
+<botstream>
+	<source type="trace" name="/home/giacomo/Scrivania/TESI/modbus/Advantech.pcap"/>
+
+
+	<statedef id="normal" />
+	<statedef id="monitored"/>
+	<statedef id="alert"/>
+	<statedef id="quarantine"/>
+
+	<metrics>
+		<metric name="pkt_rate">
+			<variation_detector status="on"/>
+			<variation_monitor status="on" type="tewma" window="60"/>
+		</metric>
+	</metrics>
+
+	 <table name="oldvalue" type="DLeft" key_type="" value_type="double" nhash="8" shash="20"/>
+
+	<features>
+		<feature name="pkt_rate_f" body="pkt_rate"/>
+	</features>
+
+	<event type="timeout" class="ddos" primary-key="ip_dst"  >
+		<state id="monitored">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="" next_state="alert"/>
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="normal">
+				<timeout_set class="ddos" key="ip_dst" value="0"/>
+			</condition>
+			<post-condition-action do="print(feature: %pkt_rate_f),oldvalue(ip_dst)=pkt_rate_f,print(monitored timeout expired for %ip_dst)"/>
+		</state>
+		<state id="alert">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 1.2 * oldvalue(ip_dst)" action="print(putting %ip_dst in quarantine for 30 secs)" next_state="quarantine">
+				<timeout_set class="ddos" key="ip_dst" value="30"/>
+			</condition>
+			<condition expression="pkt_rate_f &lt; 1.2 * oldvalue(ip_dst)" action="" next_state="monitored"/>
+			<post-condition-action do="print(feature: %pkt_rate_f),oldvalue(ip_dst)=pkt_rate_f,print(alert timeout expired for %ip_dst)"/>
+		</state>
+		<state id="quarantine">
+			<use-metric id="pkt_rate" vm_get="ip_dst"/>
+			<condition expression="true" action="" next_state="monitored"/>
+			<post-condition-action do="print(%ip_dst no longer in quarantine)">
+				<timeout_set class="ddos" key="ip_dst" value="10"/>
+			</post-condition-action>
+		</state>
+	</event>
+
+	<event type="packet" selector="proto tcp and dst_port 502 or proto tcp and src_port 502 " primary-key="ip_dst">
+		<state id="normal">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="pkt_rate_f &gt; 10" action="" next_state="monitored"/>
+		</state>
+		<state id="monitored">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="true" action="print(monitor flow)" next_state="">
+				<timeout_set class="ddos" key="ip_dst" value="10"/>
+			</condition>
+		</state>
+		<state id="alert">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do="print(%ip_dst: alert value: %pkt_rate_f)"/>
+		</state>
+		<state id="quarantine">
+			<use-metric id="pkt_rate" vd_update="ip_src-ip_dst" vm_update="ip_dst"/>
+			<condition expression="false" action="" next_state=""/>
+			<post-condition-action do="print(%ip_dst: quarantine value: %pkt_rate_f)"/>
+		</state>
+	</event>
+</botstream>
+

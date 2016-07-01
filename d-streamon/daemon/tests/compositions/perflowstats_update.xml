@@ -1,0 +1,21 @@
+<composition id="perflowstats" app_id="myapp">
+ <install>
+  <block id="selector" type="TopNFlowSelector" sched_type="passive">
+    <params>
+     <top_flows number="8"/>
+     <period msecs="500"/>
+    </params>
+  </block>
+ </install>
+
+ <update>
+
+   <!-- how do we do this w/o connection identifiers?? -->
+   <connection />
+
+<!--
+  <connection src_block="source" src_gate="source_out" dst_block="stats" dst_gate="in_pkt"/>
+  <connection src_block="stats" src_gate="out_flow" dst_block="exporter" dst_gate="in_msg"/>
+-->
+ </update>
+</composition>

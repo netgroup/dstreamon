@@ -1,0 +1,70 @@
+<botstream>
+    <!-- source type="trace" name="/mnt/old/sal/tracce/nettare10_noVLAN.pcap" /-->
+    <source type="live" name="eth3" />
+
+    <statedef id="normal" />
+    <statedef id="wait" />
+
+    <metrics>
+        <metric name="orphans" config="">
+            <variation_detector status="off" /> <!-- reset_after="60" -->
+            <variation_monitor status="on" type="dleft" insert_value="" />
+        </metric>
+
+<!--
+        <table name="tabx" type="DLeft" key_type="" value_type="uint32_t" nhash="8" shash="20">
+        </table>
+-->
+
+    </metrics>
+
+
+    <features>
+      <feature name="Orphans" body="orphans"/>
+    </features>
+
+    <event type="timeout" class="wait_http" primary-key="ip_src-domain_name">
+        <state id="wait">
+        <use-metric id="orphans" vm_update="ip_src" />
+        <condition expression="true" action="" next_state="normal">
+            <timeout_set class="wait_http" key="ip_src-domain_name" value="0" />
+        </condition>
+
+		<post-condition-action do="" />
+        </state>
+    </event>
+
+    <event type="packet" selector="proto udp and dst_port 53" primary-key="ip_src-domain_name" attack_type="">
+	<state id="normal">
+        <use-metric id="orphans" vm_get="ip_src" />
+
+        <condition expression="true" action="print(Client: %ip_src Q: %domain_name NORMAL to WAIT)" next_state="wait">
+            <timeout_set class="wait_http" key="ip_src-domain_name" value="10" />
+        </condition>
+
+		<post-condition-action do="" />
+	</state>
+	<state id="wait">
+        <use-metric id="orphans" vm_get="ip_src" />
+
+        <condition expression="true" action="print(Client: %ip_src Q: %domain_name WAIT to WAIT)" next_state="" />
+
+		<post-condition-action do="" />
+	</state>
+
+    </event>
+
+    <event type="packet" selector="proto tcp and dst_port 80 and http_method http-get" primary-key="ip_src-http_host" attack_type="">
+	<state id="wait">
+        <use-metric id="orphans" vm_get="" />
+
+        <condition expression="true" action="print(Client: %ip_src Dns Used WAIT to NORMAL)" next_state="normal">
+            <timeout_set class="wait_http" key="ip_src-http_host" value="0" />
+        </condition>
+
+		<post-condition-action do="print(http request: %ip_src -> %http_host)" />
+	</state>
+
+    </event>
+
+</botstream>

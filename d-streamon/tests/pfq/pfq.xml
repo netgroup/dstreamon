@@ -1,0 +1,21 @@
+<composition id="arch_input" app_id="boh">
+        <install>
+                <threadpool id="sniffer_thread" num_threads="1" >
+                        <core number="5"/>
+                </threadpool>
+
+                <block id="sniffer" type="PFQ_sniffer" sched_type="active" threadpool="sniffer_thread"> 
+                        <params>
+                                <queues device="eth3">
+
+                                </queues> 
+
+                        </params>
+                </block>
+                <ext_gate direction="out" block="sniffer" gate="sniffer_out" ext_name="captured_pkts"/>
+        </install>
+
+</composition>
+
+
+				

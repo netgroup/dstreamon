@@ -1,0 +1,389 @@
+---
+swagger: "2.0"
+info:
+  description: "This is the description of SCISSOR Network Monitoring management interfaces"
+  version: "1.0.0"
+  title: "SCISSOR Network Monitoring Management"
+  contact:
+    name: "API Team"
+    url: "http://wordnik.com"
+    email: "apiteam@wordnik.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "probe0.scissor.local:443"
+basePath: "/api"
+tags:
+- name: "Commands"
+  description: "Endpoints for commands."
+- name: "Configuration"
+  description: "Endpoints for configurations management"
+- name: "Values"
+  description: "Endpoints for get/set/update specific parameters"
+schemes:
+- "https"
+paths:
+  /commands:
+    get:
+      tags:
+      - "Commands"
+      summary: "Retrieve the list of commands supported by the current instance of\
+        \ the queried monitoring probe"
+      description: "Retrieve the list of commands supported by the current instance\
+        \ of the queried monitoring probe"
+      operationId: "controllers.default_controller.get_commands"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "List of supported commands"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Command"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Commands"
+  /commands/start:
+    post:
+      tags:
+      - "Commands"
+      summary: "Depending on the query parameters it starts a specific monitoring\
+        \ probe configuration or all configurations for the curr"
+      description: "Depending on the query parameters it starts a specific monitoring\
+        \ probe configuration or all configurations for the current monitoring probe\
+        \ instance."
+      operationId: "controllers.default_controller.post_commands_start"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: false
+        schema:
+          $ref: "#/definitions/StartParameters"
+      responses:
+        200:
+          description: "The configuration(s) has been started successfully."
+          schema:
+            $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Commands"
+  /commands/stop:
+    post:
+      tags:
+      - "Commands"
+      summary: "Depending on the query parameters it stops a specific monitoring probe\
+        \ configuration or all configurations for the curre"
+      description: "Depending on the query parameters it stops a specific monitoring\
+        \ probe configuration or all configurations for the current monitoring probe\
+        \ instance."
+      operationId: "controllers.default_controller.post_commands_stop"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "query"
+        description: "Name of the configuration to be stopped or 'all'."
+        required: false
+        type: "array"
+        items:
+          type: "string"
+        collectionFormat: "multi"
+      responses:
+        200:
+          description: "The configuration(s) has been stopped successfully."
+          schema:
+            $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Commands"
+  /configurations:
+    get:
+      tags:
+      - "Configuration"
+      summary: "Retrieve the current status of the current instance of the queried\
+        \ monitoring probe."
+      description: "Retrieve the current status of the current instance of the queried\
+        \ monitoring probe."
+      operationId: "controllers.default_controller.get_configurations"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters: []
+      responses:
+        200:
+          description: "Status of the queried monitoring probe instance"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Configuration"
+    post:
+      tags:
+      - "Configuration"
+      summary: "Set the current configuration of the current instance of the queried\
+        \ monitoring probe."
+      description: "Set the current configuration of the current instance of the queried\
+        \ monitoring probe."
+      operationId: "controllers.default_controller.post_configurations"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: false
+        schema:
+          $ref: "#/definitions/configuration"
+      responses:
+        200:
+          description: "Status of the queried monitoring probe instance."
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Configuration"
+    put:
+      tags:
+      - "Configuration"
+      summary: "Update the current configuration of the current instance of the queried\
+        \ monitoring probe."
+      description: "Update the current configuration of the current instance of the\
+        \ queried monitoring probe."
+      operationId: "controllers.default_controller.put_configurations"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        required: false
+        schema:
+          $ref: "#/definitions/configuration"
+      responses:
+        200:
+          description: "Status of the queried monitoring probe instance"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Configuration"
+    delete:
+      tags:
+      - "Configuration"
+      summary: "Remove the current configuration of the current instance of the queried\
+        \ monitoring probe."
+      description: "Remove the current configuration of the current instance of the\
+        \ queried monitoring probe."
+      operationId: "controllers.default_controller.delete_configurations"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "query"
+        description: "Name of the configuration to be removed."
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "Status of the queried monitoring probe instance"
+          schema:
+            $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request"
+      x-tags:
+      - tag: "Configuration"
+  /parameters:
+    get:
+      tags:
+      - "Values"
+      summary: "Retrieve the list of the current parameters key/value of the queried\
+        \ monitoring probe."
+      description: "Retrieve the list of the current parameters key/value of the queried\
+        \ monitoring probe."
+      operationId: "controllers.default_controller.get_parameters"
+      consumes: []
+      produces: []
+      parameters: []
+      responses:
+        200:
+          description: "The list of current set parameters"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/data"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Values"
+  /parameters/{name}:
+    get:
+      tags:
+      - "Values"
+      summary: "Retrieve the value of the queried parameter of the monitoring probe."
+      description: "Retrieve the value of the queried parameter of the monitoring\
+        \ probe."
+      operationId: "controllers.default_controller.parameters_name_get"
+      consumes: []
+      produces: []
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "name of the parameter"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "The value of the queried parameter of the monitoring probe."
+          schema:
+            $ref: "#/definitions/data"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Values"
+    post:
+      tags:
+      - "Values"
+      summary: "Set the value of the parameter of the monitoring probe."
+      description: "Set the value of the parameter of the monitoring probe."
+      operationId: "controllers.default_controller.parameters_name_post"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "name of the parameter"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Response containing as data the key/value pair of the parameter."
+          schema:
+            $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request"
+      x-tags:
+      - tag: "Values"
+    put:
+      tags:
+      - "Values"
+      summary: "Update the value of the parameter of the monitoring probe."
+      description: "Update the value of the parameter of the monitoring probe."
+      operationId: "controllers.default_controller.parameters_name_put"
+      consumes: []
+      produces:
+      - "application/json"
+      parameters:
+      - name: "name"
+        in: "path"
+        description: "name of the parameter"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Response containing as data the key/value pair of the new\
+            \ value."
+          schema:
+            $ref: "#/definitions/Response"
+        500:
+          description: "Error in the request."
+      x-tags:
+      - tag: "Values"
+definitions:
+  Command:
+    properties:
+      name:
+        type: "string"
+      endpoint:
+        type: "string"
+        description: "The endpoint to manage the related command"
+    description: "Command object"
+  StartParameters:
+    required:
+    - "name"
+    properties:
+      name:
+        type: "string"
+        description: "The name of a previous uploaded configuration or \"all\" to\
+          \ start all configurations uploaded."
+      verbosity:
+        type: "string"
+        description: "The level of verbosity to setup for the network Monitoring Probe\
+          \ instance. Valid values are: {\"info\", \"warning\", \"error\"}."
+      params:
+        type: "array"
+        description: "Additional parameters that could be specific for the configuration\
+          \ to be started.,"
+        items:
+          $ref: "#/definitions/data"
+    description: "Parameters that describe the configuration to be started"
+  data:
+    properties:
+      key:
+        type: "string"
+        description: "The key of the item in the dictionary."
+      value:
+        type: "string"
+        description: "The value of the item in the dictionary."
+    description: "Key/value pair"
+  Response:
+    required:
+    - "code"
+    - "data"
+    - "id"
+    - "message"
+    - "timestamp"
+    properties:
+      id:
+        type: "string"
+        description: "Unique identifier of the request."
+      timestamp:
+        type: "string"
+        format: "date"
+        description: "Timestamp of the request."
+      code:
+        type: "string"
+        description: "Custom code of the response."
+      message:
+        type: "string"
+        description: "Custome message of the response."
+      data:
+        type: "array"
+        description: "Array of key-value dictionary of custom data of the response."
+        items:
+          $ref: "#/definitions/data"
+  configuration:
+    required:
+    - "data"
+    - "name"
+    properties:
+      name:
+        type: "string"
+        description: "Name of the configuration."
+      data:
+        type: "string"
+        description: "Structured data of the configuration"
+    description: "Configuration data to be uploaded."

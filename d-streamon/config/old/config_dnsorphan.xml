@@ -1,0 +1,82 @@
+<botstream>
+    <!-- source type="trace" name="/mnt/old/sal/tracce/nettare10_noVLAN.pcap" /-->
+    <source type="live" name="eth3" />
+
+    <statedef id="normal" />
+    <statedef id="wait" timeout="10" next_state="suspect" />
+    <statedef id="suspect" timeout="60" next_state="normal" />
+
+    <metrics>
+        <metric name="dns_response_used" config="" >
+            <variation_detector status="on" /> <!-- reset_after="60" -->
+            <variation_monitor status="off" type="dleft" insert_value="ip_len" window="60"/>
+        </metric>
+
+<!--
+        <table name="tabx" type="DLeft" key_type="" value_type="uint32_t" nhash="8" shash="20">
+        </table>
+-->
+
+    </metrics>
+
+
+    <features>
+      <feature name="DnsRespUsed" body="dns_response_used"/>
+    </features>
+
+    <!-- event type="timeout" class="wait_tcp" primary-key="ip_dst">
+        <state id="wait">     
+        <condition expression="true" action="print(Client: %ip_dst goto SUSPECT)" next_state="suspect">
+            <timeout_set class="wait_tcp" key="domain_addr" value="0" />
+        </condition>
+
+		<post-condition-action do="" />
+        </state>
+    </event-->
+
+    <event type="packet" selector="proto udp and src_port 53" primary-key="ip_dst" attack_type="">
+	<state id="normal">
+        <use-metric id="dns_response_used" vd_set="ip_dst-domain_addr" />
+
+        <condition expression="true" action="print(Client: %ip_dst Q: %domain_name A: %domain_addr NORMAL to WAIT)" next_state="wait">
+            <!-- timeout_set class="wait_tcp" key="domain_addr" value="10" /-->
+        </condition>
+
+		<post-condition-action do="" />
+	</state>
+	<state id="wait">
+        <use-metric id="dns_response_used" vd_set="ip_dst-domain_addr" />
+
+        <condition expression="true" action="print(Client: %ip_dst Q: %domain_name A: %domain_addr WAIT to WAIT)" next_state="" />
+
+		<post-condition-action do="" />
+	</state>
+    <state id="suspect">
+        <use-metric id="dns_response_used" vd_get="ip_dst-domain_addr" />
+
+        <condition expression="true" action="print(Client: %ip_dst ALREADY SUSPECT)" next_state="" />
+
+		<post-condition-action do="" />
+    </state>
+
+    </event>
+
+    <event type="packet" selector="proto tcp and dst_port 80" primary-key="ip_src" attack_type="">
+	<state id="wait">
+        <use-metric id="dns_response_used" vd_get="ip_src-ip_dst" />
+
+        <condition expression="DnsRespUsed == 1" action="print(Client: %ip_src Dns Used WAIT to NORMAL)" next_state="normal" />
+
+		<post-condition-action do="print(http request: %ip_src -> %ip_dst)" />
+	</state>
+    <state id="suspect">
+        <use-metric id="dns_response_used" vd_get="ip_src-ip_dst" />
+
+        <condition expression="true" action="print(http request (already suspect): %ip_src -> %ip_dst)" next_state="" />
+
+		<post-condition-action do="" />
+    </state>
+
+    </event>
+
+</botstream>

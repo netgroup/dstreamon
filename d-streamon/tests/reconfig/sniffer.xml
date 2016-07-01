@@ -1,0 +1,20 @@
+<composition id="arch_input" app_id="boh">
+	<install>
+		<threadpool id="sniffer_thread" num_threads="1" >
+			<core number="0"/>
+		</threadpool>
+
+		<block id="sniffer" type="pcap_sniffer" sched_type="active" threadpool="sniffer_thread"> 
+			<params>
+                                        <source type="live" name="eth1"/>
+				<!--bpf_filter expression="!tcp"/--> 
+			</params>
+                </block>
+                <ext_gate direction="out" block="sniffer" gate="sniffer_out" ext_name="captured_pkts"/>
+
+	</install>
+
+</composition>
+
+
+				
