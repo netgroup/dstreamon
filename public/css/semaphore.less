@@ -1,0 +1,49 @@
+@import '../vendor/bootstrap/less/variables.less';
+@import '../vendor/fontawesome/less/variables.less';
+@import '//fonts.googleapis.com/css?family=Roboto:300,400,400italic,700,500,700italic';
+@import '//fonts.googleapis.com/css?family=Source+Code+Pro:300,400,500,700:latin';
+
+@fa-font-path: "../vendor/fontawesome/fonts";
+
+@font-family-sans-serif: Roboto, Arial, sans-serif;
+@font-family-monospace: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+@font-family-base: @font-family-sans-serif;
+
+@import '../vendor/bootstrap/less/bootstrap.less';
+@import '../vendor/fontawesome/less/font-awesome.less';
+
+.navbar {
+	border-radius:0;
+	border-left:0;
+	border-right: 0;
+}
+
+ui-view {
+	& > h1, & > h2, & > h3, & > h4, & > h5, & > h6 {
+		margin-top: 0;
+	}
+}
+
+h1, h2, h3, h4, h5, h6 {
+	&.no-top-margin {
+		margin-top: 0;
+	}
+}
+
+ul.nav {
+	& > li.active a {
+		background-color: #eee;
+	}
+}
+
+.green {
+	color: green
+}
+
+.yellow {
+	color: yellow
+}
+
+.red {
+	color: red
+}

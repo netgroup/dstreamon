@@ -1,0 +1,22 @@
+h1 Jobs
+	a.btn.btn-default.pull-right(ui-sref="playbook.newjob") Add Job
+
+table.table.table-hover
+	thead
+		tr
+			th Job Name
+			th Play File
+			th Extra Vars
+			th &nbsp;
+	tbody
+		tr(ng-repeat="job in jobs.jobs")
+			td {{ job.data.name }}
+			td {{ job.data.play_file }}
+			td {{ job.data.extra_vars }}
+			td
+				.btn-group.pull-right
+					button.btn.btn-default(ng-click="runJob(job)"): i.fa.fa-fw.fa-play
+					a.btn.btn-default(ui-sref="playbook.job({job_id:job.data._id})"): i.fa.fa-pencil-square-o.fa-fw
+					button.btn.btn-danger(ng-click="deleteJob(job)"): i.fa.fa-trash-o.fa-fw
+
+blockquote Jobs tell Semaphore which task file to run in your playbook.

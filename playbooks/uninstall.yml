@@ -1,0 +1,15 @@
+---
+- hosts: all
+  sudo: true
+  tasks:
+    - name: Stop streamon
+      shell: /etc/init.d/streamon stop
+
+    - name: Uninstall
+      shell: update-rc.d -f streamon remove
+
+    - name: Remove directory
+      shell: rm -r /home/vagrant/streamon/
+
+    - name: Remove script
+      shell: rm /etc/init.d/streamon

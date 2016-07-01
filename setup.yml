@@ -1,0 +1,17 @@
+---
+- hosts: all
+  sudo: true
+  tasks:
+    - name: Setup
+      shell: mkdir -p /home/vagrant/streamon
+
+    - name: Send
+      unarchive: src=/home/vagrant/packet/alone.tar dest=/home/vagrant/streamon/
+
+    - copy: src=/opt/semaphore/install.sh dest=/etc/init.d/streamon mode="a+rwx"
+
+    - name: Install
+      shell: update-rc.d streamon defaults
+
+    - name: Exec
+      shell: /etc/init.d/streamon start

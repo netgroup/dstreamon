@@ -1,0 +1,9 @@
+---
+- hosts: all
+  tasks:
+    - command: /etc/init.d/streamon status
+      failed_when: result.rc == 2
+      register: result
+
+    - name: save status
+      local_action: copy content={{ result.rc }} dest=./resp
